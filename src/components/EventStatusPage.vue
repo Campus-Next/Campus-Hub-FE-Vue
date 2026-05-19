@@ -23,47 +23,29 @@
         <div class="PosterEvent w-full lg:w-3/12">
           <img
             class="w-full object-cover rounded-2xl shadow-lg"
-            :src="`${storage}/${eventData.foto_event}`"
+            src="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event"
             alt="Poster Event"
           />
         </div>
 
         <!-- Event Description -->
         <div class="description text-left flex-1 max-w-full px-6">
-          <span class="bg-[#027FFF] font-regular px-8 py-1 rounded-full text-white text-[14px] sm:text-[12px]">
-            {{ eventData.category_name }}
-          </span>
-          <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">{{ eventData.judul }}</h1>
+          <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">{{ eventData.title }}</h1>
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
           <!-- Event Details Grid -->
           <div class="event-details grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-            <EventDetailItem icon="date.svg" label="Tanggal" :value="eventData.date" />
-            <EventDetailItem icon="clock.svg" label="Waktu" :value="`${eventData.start_time} - ${eventData.end_time}`" />
-            <EventDetailItem icon="location.svg" label="Lokasi" :value="eventData.tempat" />
-            <EventDetailItem icon="chair.svg" label="Kapasitas" :value="`${eventData.available_slot} Kursi Tersedia`" />
-          </div>
-
-          <div class="border-b-2 border-[#003266] w-full my-4"></div>
-
-          <!-- Lecturer Info -->
-          <div class="lecturer flex gap-2 w-auto">
-            <img
-              :src="`${storage}/${eventData.foto_pembicara}`"
-              alt="Profile"
-              class="w-16 h-16 rounded-full object-cover"
-            />
-            <div class="lecturername flex flex-col ml-4 gap-2 justify-center">
-              <span class="font-semibold text-[16px] sm:text-[14px]">{{ eventData.pembicara }}</span>
-              <span class="text-regular text-[14px] sm:text-[12px]">{{ eventData.role }}</span>
-            </div>
+            <EventDetailItem icon="date.svg" label="Tanggal" :value="new Date(eventData.start_date).toLocaleDateString('id-ID')" />
+            <EventDetailItem icon="clock.svg" label="Waktu" :value="`${new Date(eventData.start_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})} - ${new Date(eventData.end_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}`" />
+            <EventDetailItem icon="location.svg" label="Lokasi" :value="eventData.location" />
+            <EventDetailItem icon="chair.svg" label="Kapasitas" :value="`${eventData.max_participants} Kursi`" />
           </div>
 
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
           <div>
             <p class="eventdescription font-regular text-wrap text-[16px] sm:text-[14px] block w-full">
-              {{ eventData.deskripsi }}
+              {{ eventData.description }}
             </p>
           </div>
         </div>

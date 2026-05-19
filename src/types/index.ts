@@ -8,20 +8,18 @@ export interface User {
 
 export interface Event {
   id: number
-  foto_event: string
-  category_name: string
-  accessibility: string
-  judul: string
-  deskripsi: string
-  date: string
-  start_time: string
-  end_time: string
-  tempat: string
-  available_slot: number
-  foto_pembicara: string
-  pembicara: string
-  role: string
-  join_date?: string
+  organizer_id: number
+  title: string
+  description: string
+  start_date: string
+  end_date: string
+  location: string
+  max_participants: number
+  registration_fee: string | number
+  registration_open: string
+  registration_deadline: string
+  created_at?: string
+  updated_at?: string
   status?: string
 }
 

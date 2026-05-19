@@ -18,9 +18,7 @@
           <li><router-link to="/" class="hover:underline">Home</router-link></li>
           <li class="mx-2"> &gt; </li>
           <li>
-            <router-link :to="categoryLink" class="hover:underline">
-              {{ eventData.category_name }}
-            </router-link>
+            <span class="text-gray-500">Event Detail</span>
           </li>
         </ol>
       </div>
@@ -29,17 +27,14 @@
         <div class="PosterEvent w-3/12 h-1/2">
           <img
             class="w-full h-full object-cover rounded-2xl shadow-lg"
-            :src="`${storage}/${eventData.foto_event}`"
+            src="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event"
             alt="Poster Event"
           />
         </div>
 
         <div class="description text-left mx-8 mt-4 md:mt-0 md:ml-8 w-6/12">
-          <span class="bg-[#027FFF] font-regular px-8 py-1 rounded-full text-white text-[14px] sm:text-[12px]">
-            {{ eventData.category_name }}
-          </span>
           <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">
-            {{ eventData.judul }}
+            {{ eventData.title }}
           </h1>
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
@@ -51,7 +46,7 @@
               <div class="detail-content">
                 <p class="text-sm text-gray-500 font-medium">Tanggal</p>
                 <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                  {{ eventData.date }}
+                  {{ new Date(eventData.start_date).toLocaleDateString('id-ID') }}
                 </p>
               </div>
             </div>
@@ -63,7 +58,7 @@
               <div class="detail-content">
                 <p class="text-sm text-gray-500 font-medium">Waktu</p>
                 <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                  {{ eventData.start_time }} - {{ eventData.end_time }}
+                  {{ new Date(eventData.start_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) }} - {{ new Date(eventData.end_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) }}
                 </p>
               </div>
             </div>
@@ -75,7 +70,7 @@
               <div class="detail-content">
                 <p class="text-sm text-gray-500 font-medium">Lokasi</p>
                 <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                  {{ eventData.tempat }}
+                  {{ eventData.location }}
                 </p>
               </div>
             </div>
@@ -87,7 +82,7 @@
               <div class="detail-content">
                 <p class="text-sm text-gray-500 font-medium">Kapasitas</p>
                 <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                  {{ eventData.available_slot }} Kursi Tersedia
+                  {{ eventData.max_participants }} Kursi
                 </p>
               </div>
             </div>
@@ -95,27 +90,9 @@
 
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
-          <div class="lecturer flex gap-2 ml-2 w-auto">
-            <img
-              :src="`${storage}/${eventData.foto_pembicara}`"
-              alt="Profile"
-              class="w-16 h-16 rounded-full object-cover"
-            />
-            <div class="lecturername flex flex-col ml-4 gap-2 justify-center">
-              <span class="font-semibold text-[16px] sm:text-[14px]">
-                {{ eventData.pembicara }}
-              </span>
-              <span class="text-regular text-[14px] sm:text-[12px]">
-                {{ eventData.role }}
-              </span>
-            </div>
-          </div>
-
-          <div class="border-b-2 border-[#003266] w-full my-4"></div>
-
           <div>
             <p class="eventdescription font-regular text-wrap text-[16px] sm:text-[14px] block w-full max-w-[486px]">
-              {{ eventData.deskripsi }}
+              {{ eventData.description }}
             </p>
           </div>
         </div>
@@ -141,48 +118,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchEvent } from '../../services/api'
 import Navbar from '../../components/Navbar.vue'
-
-interface EventData {
-  id: number
-  category_name: string
-  judul: string
-  foto_event: string
-  date: string
-  start_time: string
-  end_time: string
-  tempat: string
-  available_slot: number
-  foto_pembicara: string
-  pembicara: string
-  role: string
-  deskripsi: string
-}
+import type { Event } from '../../types'
 
 const route = useRoute()
 const router = useRouter()
 
 const storage = import.meta.env.VITE_STORAGE_BASE_URL
-const eventData = ref<EventData | null>(null)
+const eventData = ref<Event | null>(null)
 const error = ref<string | null>(null)
 const isLoaded = ref(false)
 const isExiting = ref(false)
-
-const categoryLink = computed(() => {
-  if (!eventData.value) return '/home'
-  const category = eventData.value.category_name
-  const links: Record<string, string> = {
-    'Seminar': '/seminar',
-    'Webinar': '/webinar',
-    'Kuliah Tamu': '/kuliah-tamu',
-    'Sertifikasi': '/sertifikasi',
-    'Workshop': '/workshop'
-  }
-  return links[category] || '/home'
-})
 
 const handleExit = () => {
   isExiting.value = true

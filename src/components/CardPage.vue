@@ -4,11 +4,9 @@
       <template v-if="currentEvents.length > 0">
         <div v-for="event in currentEvents" :key="event.id" class="gap-y-[50px]">
           <Card @click="handleCardClick(event.id)">
-            <CardImage :image="event.foto_event" />
-            <CardKategori :kategori="event.category_name" />
-            <CardBody :title="event.judul" :content="event.deskripsi" />
-            <CardTanggal>{{ event.date }}</CardTanggal>
-            <CardCreator :image="event.foto_pembicara" :nama="event.pembicara" :title="event.role" />
+            <CardImage image="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event" />
+            <CardBody :title="event.title" :content="event.description" />
+            <CardTanggal>{{ new Date(event.start_date).toLocaleDateString('id-ID') }}</CardTanggal>
           </Card>
         </div>
       </template>
@@ -53,18 +51,7 @@ import CardImage from './CardImage.vue'
 import CardTanggal from './CardTanggal.vue'
 import CardCreator from './CardCreator.vue'
 
-interface Event {
-  id: number
-  foto_event: string
-  category_name: string
-  accessibility: string
-  judul: string
-  deskripsi: string
-  date: string
-  foto_pembicara: string
-  pembicara: string
-  role: string
-}
+import type { Event } from '../types'
 
 interface Props {
   events: Event[]

@@ -22,18 +22,7 @@
             />
           </div>
 
-          <FilterTabs
-            :tabs="[
-              { value: 'All', label: 'All', count: categoryCounts.all },
-              { value: 1, label: 'Webinar', count: categoryCounts.webinar },
-              { value: 2, label: 'Seminar', count: categoryCounts.seminar },
-              { value: 3, label: 'Kuliah Tamu', count: categoryCounts.kuliahTamu },
-              { value: 4, label: 'Workshop', count: categoryCounts.workshop },
-              { value: 5, label: 'Sertifikasi', count: categoryCounts.sertifikasi }
-            ]"
-            :active-tab="categoryFilter"
-            @change="handleCategoryFilter"
-          />
+
 
           <div v-if="error" class="flex justify-center items-center py-8 px-4 sm:px-6 lg:px-20">
             <div class="bg-red-50 border border-red-400 text-red-700 px-6 py-4 rounded-lg text-center max-w-md">
@@ -50,11 +39,11 @@
               @click="router.push(`/my-events/${event.id}/participants`)"
             >
               <div class="event-data flex items-center">
-                <img :src="`${storage}/${event.foto_event}`" :alt="event.judul" class="w-20 h-20 object-cover rounded-full my-2">
+                <img src="https://via.placeholder.com/150/027FFF/FFFFFF?text=Event" alt="Event" class="w-20 h-20 object-cover rounded-full my-2">
                 <div class="event-details flex flex-col px-4">
-                  <span class="event-title block font-semibold text-lg mb-2">{{ event.judul }}</span>
+                  <span class="event-title block font-semibold text-lg mb-2">{{ event.title }}</span>
                   <span class="event-date text-sm text-gray-500 mb-1 block">
-                    Updated: {{ new Date(event.uploaded).toLocaleDateString() }}
+                    Updated: {{ event.updated_at ? new Date(event.updated_at).toLocaleDateString() : 'N/A' }}
                   </span>
                 </div>
               </div>
@@ -104,18 +93,17 @@ const isLoading = ref(true)
 const showConfirm = ref(false)
 const storage = import.meta.env.VITE_STORAGE_BASE_URL
 
-const { categoryFilter, handleCategoryFilter, filteredByCategory, categoryCounts } = useCategoryFilter(events)
-const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange } = useEventFilters(filteredByCategory, 'judul', 'uploaded')
+const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange } = useEventFilters(events, 'title', 'updated_at')
 
 const sortedEvents = computed(() => {
-  const filtered = filteredByCategory.value.filter(event => 
-    event.judul.toLowerCase().includes(searchQuery.value.toLowerCase())
+  const filtered = events.value.filter(event => 
+    event.title.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
   const sorted = [...filtered]
   if (sortOption.value === 'date') {
-    return sorted.sort((a, b) => new Date(a.uploaded).getTime() - new Date(b.uploaded).getTime())
+    return sorted.sort((a, b) => new Date(a.updated_at || '').getTime() - new Date(b.updated_at || '').getTime())
   } else if (sortOption.value === 'title') {
-    return sorted.sort((a, b) => a.judul.localeCompare(b.judul))
+    return sorted.sort((a, b) => a.title.localeCompare(b.title))
   }
   return sorted
 })

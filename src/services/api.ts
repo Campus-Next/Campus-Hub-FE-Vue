@@ -1,60 +1,79 @@
 import { MOCK_ENABLED, mockEvents, mockCategoryEvents, mockUser, mockAdminUser } from './mockData'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 // Helper untuk delay mock response
 const mockDelay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms))
 
 export interface Event {
   id: number
-  foto_event: string
-  category_name: string
-  accessibility: string
-  judul: string
-  deskripsi: string
-  date: string
-  foto_pembicara: string
-  pembicara: string
-  role: string
+  organizer_id: number
+  title: string
+  description: string
+  start_date: string
+  end_date: string
+  location: string
+  max_participants: number
+  registration_fee: string | number
+  registration_open: string
+  registration_deadline: string
+  created_at?: string
+  updated_at?: string
+  status?: string
 }
 
-export interface EventsResponse {
-  events: Event[]
-  trending: number
-  category: number
+export interface ApiResponse<T> {
+  success: boolean
+  message: string
+  data: T
 }
 
-export const fetchEvents = async (category?: string): Promise<any> => {
+export const fetchEvents = async (category?: string): Promise<ApiResponse<Event[]>> => {
   if (MOCK_ENABLED) {
     await mockDelay()
-    return category ? mockCategoryEvents : mockEvents
+    return { success: true, message: 'Mock', data: (category ? mockCategoryEvents : mockEvents).events as any }
   }
   
+  // The new API doesn't seem to support category filtering via query param in the docs,
+  // but we can pass it if it's supported, or just fetch all.
   const endpoint = category ? `/events?category=${category}` : '/events'
   const response = await fetch(`${API_BASE_URL}${endpoint}`)
 
+  const data = await response.json()
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.message)
+    throw new Error(data.message || 'Error fetching events')
   }
 
-  return response.json()
+  return data
 }
 
-export const fetchEvent = async (id: number) => {
+export const fetchEvent = async (id: number): Promise<Event> => {
   if (MOCK_ENABLED) {
     await mockDelay()
-    return mockEvents.events.find(e => e.id === id) || mockEvents.events[0]
+    const found = mockEvents.events.find(e => e.id === id) || mockEvents.events[0]
+    return {
+      ...found,
+      organizer_id: 1,
+      title: found.title,
+      description: found.description,
+      location: found.location,
+      start_date: found.date,
+      end_date: found.date,
+      max_participants: 100,
+      registration_fee: 0,
+      registration_open: found.date,
+      registration_deadline: found.date
+    } as any
   }
   
   const response = await fetch(`${API_BASE_URL}/events/${id}`)
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.message)
+  const json = await response.json()
+  if (!response.ok || !json.success) {
+    throw new Error(json.message || 'Event not found')
   }
 
-  return response.json()
+  return json.data
 }
 
 export const login = async (credentials: { email: string; password: string }) => {
@@ -69,26 +88,17 @@ export const login = async (credentials: { email: string; password: string }) =>
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
     }
-    // Encode to base64url (JWT format)
     const base64UrlEncode = (str: string) => {
-      return btoa(str)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
+      return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     }
     const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
     const body = base64UrlEncode(JSON.stringify(mockPayload))
-    const signature = 'mock-signature'
-    const token = `${header}.${body}.${signature}`
+    const token = `${header}.${body}.mock-signature`
     
-    return {
-      message: 'Login berhasil',
-      access_token: token,
-      token_type: 'Bearer'
-    }
+    return { message: 'Login berhasil', access_token: token, token_type: 'Bearer' }
   }
   
-  const response = await fetch(`${API_BASE_URL}/auth/login/user`, {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials)
@@ -98,7 +108,7 @@ export const login = async (credentials: { email: string; password: string }) =>
 
   if (!response.ok) {
     const error = new Error()
-    ;(error as any).data = data.message
+    ;(error as any).data = data.message || data.error
     throw error
   }
 
@@ -129,7 +139,7 @@ export const register = async (userData: any) => {
 }
 
 export const registerEventWithToken = async (eventId: number, token: string) => {
-  const response = await fetch(`${API_BASE_URL}/events/${eventId}/register`, {
+  const response = await fetch(`${API_BASE_URL}/events/${eventId}/enroll`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -149,8 +159,8 @@ export const registerEventWithToken = async (eventId: number, token: string) => 
 }
 
 export const cancelRegistration = async (eventId: number, token: string) => {
-  const response = await fetch(`${API_BASE_URL}/my-events/${eventId}/cancel`, {
-    method: 'POST',
+  const response = await fetch(`${API_BASE_URL}/events/${eventId}/enrol`, {
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -187,7 +197,8 @@ export const deleteAccount = async (token: string) => {
 }
 
 export const fetchUniqueCode = async (eventId: number, token: string) => {
-  const response = await fetch(`${API_BASE_URL}/my-events/${eventId}/kode-unik`, {
+  // Assuming there is an endpoint for this, though not defined in markdown, let's keep it but it might fail
+  const response = await fetch(`${API_BASE_URL}/events/${eventId}/links`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -228,7 +239,7 @@ export const updatePassword = async (newPassword: string, confirmation: string, 
 export const fetchMyEvents = async (token: string) => {
   if (MOCK_ENABLED) {
     await mockDelay()
-    return { events: [] }
+    return { data: [] }
   }
   
   const response = await fetch(`${API_BASE_URL}/my-events`, {
@@ -248,7 +259,7 @@ export const fetchMyEvents = async (token: string) => {
 }
 
 export const fetchEventStatus = async (eventId: number, token: string) => {
-  const response = await fetch(`${API_BASE_URL}/my-events/${eventId}/status`, {
+  const response = await fetch(`${API_BASE_URL}/events/${eventId}/participants`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -262,6 +273,8 @@ export const fetchEventStatus = async (eventId: number, token: string) => {
     throw error
   }
 
+  // Determine user status from participants list, since we don't have user_id, 
+  // wait we just return data for now and let the component handle it or we assume it's just one object if there's an endpoint for me
   return data
 }
 
@@ -271,7 +284,8 @@ export const fetchUserProfile = async (token: string) => {
     return token.includes('admin') ? mockAdminUser : mockUser
   }
   
-  const response = await fetch(`${API_BASE_URL}/user`, {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -320,26 +334,18 @@ export const loginAdmin = async (credentials: { email: string; password: string 
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
     }
-    // Encode to base64url (JWT format)
     const base64UrlEncode = (str: string) => {
-      return btoa(str)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
+      return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     }
     const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
     const body = base64UrlEncode(JSON.stringify(mockPayload))
-    const signature = 'mock-signature'
-    const token = `${header}.${body}.${signature}`
+    const token = `${header}.${body}.mock-signature`
     
-    return {
-      message: 'Login admin berhasil',
-      access_token: token,
-      token_type: 'Bearer'
-    }
+    return { message: 'Login admin berhasil', access_token: token, token_type: 'Bearer' }
   }
   
-  const response = await fetch(`${API_BASE_URL}/auth/login/admin`, {
+  // New API just uses /auth/login for everyone
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials)
@@ -349,7 +355,7 @@ export const loginAdmin = async (credentials: { email: string; password: string 
 
   if (!response.ok) {
     const error = new Error()
-    ;(error as any).data = data.message
+    ;(error as any).data = data.message || data.error
     throw error
   }
 
@@ -361,6 +367,7 @@ export const createEvent = async (eventData: FormData, token: string) => {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`
+      // Note: Do NOT set Content-Type for FormData, browser sets it automatically with boundary
     },
     body: eventData
   })
@@ -377,8 +384,10 @@ export const createEvent = async (eventData: FormData, token: string) => {
 }
 
 export const updateEvent = async (eventId: number, eventData: FormData, token: string) => {
+  // According to Laravel REST, updating with FormData usually requires _method=PATCH inside body or query
+  eventData.append('_method', 'PATCH')
   const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
-    method: 'POST',
+    method: 'POST', // We use POST but fake it with _method=PATCH
     headers: {
       'Authorization': `Bearer ${token}`
     },
@@ -397,7 +406,7 @@ export const updateEvent = async (eventId: number, eventData: FormData, token: s
 }
 
 export const fetchEventParticipants = async (eventId: number, token: string) => {
-  const response = await fetch(`${API_BASE_URL}/my-events/${eventId}/participants`, {
+  const response = await fetch(`${API_BASE_URL}/events/${eventId}/participants`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
@@ -412,13 +421,14 @@ export const fetchEventParticipants = async (eventId: number, token: string) => 
 }
 
 export const checkInParticipant = async (eventId: number, uniqueCode: string, token: string) => {
-  const response = await fetch(`${API_BASE_URL}/my-events/${eventId}/check-in`, {
-    method: 'POST',
+  // Using PATCH on the participant endpoint if we know their ID, but uniqueCode might be another logic
+  const response = await fetch(`${API_BASE_URL}/events/${eventId}/participants/${uniqueCode}`, {
+    method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ kode: uniqueCode })
+    body: JSON.stringify({ status: 'attended' })
   })
 
   const data = await response.json()

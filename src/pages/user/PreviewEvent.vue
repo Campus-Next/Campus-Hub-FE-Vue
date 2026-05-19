@@ -13,9 +13,7 @@
           <li><router-link to="/" class="hover:underline">Home</router-link></li>
           <li class="mx-2"> &gt; </li>
           <li>
-            <router-link :to="categoryRoute" class="hover:underline">
-              {{ eventData.category_name }}
-            </router-link>
+            <span class="text-gray-500">Event Preview</span>
           </li>
           <li class="mx-2"> &gt; </li>
           <li><a href="" class="hover:underline">Booking</a></li>
@@ -28,16 +26,13 @@
             <div class="PosterEvent w-6/12 mr-4">
               <img
                 class="w-full h-full object-cover rounded-2xl shadow-lg"
-                :src="`${storage}/${eventData.foto_event}`"
+                src="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event"
                 alt="Poster Event"
               />
             </div>
 
             <div class="description text-left mx-4 mt-4 lg:mt-0 lg:w-8/12 sm:w-full">
-              <span class="bg-[#027FFF] font-regular px-8 py-1 rounded-full text-white text-[14px]">
-                {{ eventData.category_name }}
-              </span>
-              <h1 class="font-bold text-[28px] py-4">{{ eventData.judul }}</h1>
+              <h1 class="font-bold text-[28px] py-4">{{ eventData.title }}</h1>
               <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
               <div class="event-details grid grid-cols-1 sm:grid-cols-2 gap-6 ml-2">
@@ -47,7 +42,7 @@
                   </div>
                   <div class="detail-content">
                     <p class="text-sm text-gray-500 font-medium">Tanggal</p>
-                    <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">{{ eventData.date }}</p>
+                    <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">{{ new Date(eventData.start_date).toLocaleDateString('id-ID') }}</p>
                   </div>
                 </div>
 
@@ -58,7 +53,7 @@
                   <div class="detail-content">
                     <p class="text-sm text-gray-500 font-medium">Waktu</p>
                     <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                      {{ eventData.start_time }} - {{ eventData.end_time }}
+                      {{ new Date(eventData.start_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) }} - {{ new Date(eventData.end_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) }}
                     </p>
                   </div>
                 </div>
@@ -69,7 +64,7 @@
                   </div>
                   <div class="detail-content">
                     <p class="text-sm text-gray-500 font-medium">Lokasi</p>
-                    <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">{{ eventData.tempat }}</p>
+                    <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">{{ eventData.location }}</p>
                   </div>
                 </div>
 
@@ -80,33 +75,15 @@
                   <div class="detail-content">
                     <p class="text-sm text-gray-500 font-medium">Kapasitas</p>
                     <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                      {{ eventData.available_slot }} Kursi Tersedia
+                      {{ eventData.max_participants }} Kursi
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div class="border-b-2 border-[#003266] w-full my-4"></div>
-
-              <div class="lecturer-container flex items-center">
-                <div class="lecturer flex gap-2 items-center ml-2">
-                  <img
-                    :src="`${storage}/${eventData.foto_pembicara}`"
-                    alt="Profile"
-                    class="w-16 h-16 text-4xl sm:text-3xl rounded-full object-cover"
-                  />
-                  <div class="lecturername flex flex-col ml-4">
-                    <span class="font-semibold text-base">{{ eventData.pembicara }}</span>
-                    <span class="text-regular text-sm text-gray-600">{{ eventData.role }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="border-b-2 border-[#003266] w-full my-4"></div>
-
               <div class="description-section px-2">
                 <p class="eventdescription font-regular text-wrap text-[16px] sm:text-[14px] block w-full max-w-[486px]">
-                  {{ eventData.deskripsi }}
+                  {{ eventData.description }}
                 </p>
               </div>
             </div>
@@ -118,7 +95,7 @@
             <span class="text-left my-2 font-medium text-[14px] pl-2 me-auto">Sub Total</span>
             <span class="text-right my-2 font-medium text-[14px] ms-auto">1 seat(s)</span>
           </div>
-          <span class="event-type my-2 font-medium text-[14px] pl-2">{{ eventData.category_name }}</span>
+          <span class="event-type my-2 font-medium text-[14px] pl-2">Event</span>
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
           <div class="total flex gap-4">
             <span class="text-left my-2 font-semibold text-[18px] pl-2 me-auto">Total</span>
@@ -171,10 +148,6 @@ const gagalPopup = ref(false)
 const isExiting = ref(false)
 const isLoaded = ref(false)
 const message = ref('')
-
-const categoryRoute = computed(() => 
-  eventData.value ? getCategoryRoute(eventData.value.category_name) : '/'
-)
 
 const handleBooking = async () => {
   try {

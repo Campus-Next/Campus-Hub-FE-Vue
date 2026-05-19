@@ -90,16 +90,16 @@
               >
                 <div class="event-data flex items-center">
                   <img
-                    :src="`${storage}/${event.foto_event}`"
-                    :alt="event.judul"
+                    src="https://via.placeholder.com/150/027FFF/FFFFFF?text=Event"
+                    alt="Event"
                     class="w-20 h-20 object-cover rounded-full my-2"
                   />
                   <div class="event-details flex flex-col px-4">
                     <span class="event-title block font-semibold text-lg mb-2">
-                      {{ event.judul }}
+                      {{ event.title }}
                     </span>
                     <span class="event-date text-sm text-gray-500 mb-1 block">
-                      Join date: {{ new Date(event.join_date).toLocaleDateString() }}
+                      Join date: {{ event.created_at ? new Date(event.created_at).toLocaleDateString() : 'N/A' }}
                     </span>
                   </div>
                 </div>
@@ -122,13 +122,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { fetchMyEvents } from '../../services/api'
 import Navbar from '../../components/Navbar.vue'
 
-interface Event {
-  id: number
-  judul: string
-  foto_event: string
-  join_date: string
-  status: string
-}
+import type { Event } from '../../types'
 
 const router = useRouter()
 const route = useRoute()
@@ -158,7 +152,7 @@ const handleStatusFilter = (status: string) => {
 
 const filteredEvents = computed(() => {
   return events.value
-    .filter(event => event.judul.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    .filter(event => event.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
     .filter(event => {
       switch (statusFilter.value.toLowerCase()) {
         case 'registered':
@@ -180,9 +174,9 @@ const filteredEvents = computed(() => {
 const sortedEvents = computed(() => {
   return [...filteredEvents.value].sort((a, b) => {
     if (sortOption.value === 'date') {
-      return new Date(a.join_date).getTime() - new Date(b.join_date).getTime()
+      return new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
     } else if (sortOption.value === 'title') {
-      return a.judul.localeCompare(b.judul)
+      return a.title.localeCompare(b.title)
     }
     return 0
   })
