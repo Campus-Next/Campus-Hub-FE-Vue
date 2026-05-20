@@ -20,7 +20,7 @@
       <div v-else-if="items.length === 0" class="bg-white rounded-2xl shadow-md p-10 text-center">
         <i class="ri-shopping-cart-2-line text-6xl text-gray-300" />
         <h2 class="text-2xl font-semibold mt-4">Keranjang kamu masih kosong</h2>
-        <p class="text-gray-500 mt-2">Tambahkan acara dari halaman detail untuk mulai berbelanja.</p>
+        <p class="text-gray-500 mt-2">Tambahkan acara dari halaman detail untuk mulai mendaftar.</p>
         <router-link
           to="/"
           class="inline-block mt-6 bg-[#027FFF] hover:bg-[#0066CC] text-white font-medium px-8 h-11 leading-[44px] rounded-lg transition-colors"
@@ -37,7 +37,7 @@
             class="cart-item p-4 border border-[#027FFF] rounded-2xl shadow-md hover:shadow-lg transition duration-300 flex flex-col sm:flex-row gap-4 sm:items-center"
           >
             <img
-              src="https://via.placeholder.com/150/027FFF/FFFFFF?text=Event"
+              :src="getEventImageUrl(item.event)"
               alt="Event"
               class="w-24 h-24 object-cover rounded-xl"
             />
@@ -48,9 +48,6 @@
               </span>
               <span class="text-sm text-gray-500" v-if="item.event?.location">
                 {{ item.event.location }}
-              </span>
-              <span class="font-medium text-[#027FFF] mt-1">
-                {{ formatPrice(item.event?.registration_fee) }}
               </span>
             </div>
 
@@ -84,22 +81,18 @@
         </div>
 
         <div class="summary w-full lg:w-4/12 h-fit bg-white shadow-lg rounded-2xl p-6 flex flex-col">
-          <h2 class="font-semibold text-[20px] mb-4">Ringkasan</h2>
+          <h2 class="font-semibold text-[20px] mb-4">Ringkasan Pendaftaran</h2>
           <div class="flex justify-between text-sm mb-2">
-            <span>Jumlah item</span>
+            <span>Jumlah Acara</span>
             <span>{{ itemCount }}</span>
           </div>
           <div class="border-b-2 border-[#003266] w-full my-2" />
-          <div class="flex justify-between font-semibold text-[18px]">
-            <span>Total</span>
-            <span>{{ formatPrice(total) }}</span>
-          </div>
           <button
-            class="bg-[#027FFF] hover:bg-[#0066CC] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-medium w-full h-11 mt-6 rounded-lg text-white text-[16px] transition-colors"
+            class="bg-[#027FFF] hover:bg-[#0066CC] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-medium w-full h-11 mt-4 rounded-lg text-white text-[16px] transition-colors"
             :disabled="isCheckingOut || items.length === 0"
             @click="onCheckout"
           >
-            {{ isCheckingOut ? 'Memproses...' : 'Checkout' }}
+            {{ isCheckingOut ? 'Memproses...' : 'Konfirmasi Pendaftaran' }}
           </button>
         </div>
       </div>
@@ -130,6 +123,7 @@ import PopUpBerhasil from '../../components/PopUpBerhasil.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
 import { useCart } from '../../composables/useCart'
 import { useAuthCheck } from '../../composables/useAuthCheck'
+import { getEventImageUrl } from '../../utils/helpers'
 import type { Cart as CartItem } from '../../types'
 
 const router = useRouter()
@@ -187,7 +181,7 @@ const onCheckout = async () => {
       : `${enrolledCount} acara berhasil terdaftar, ${skippedCount} dilewati`
     showSuccess.value = true
   } catch (err: any) {
-    errorMessage.value = err?.data || err?.message || 'Checkout gagal'
+    errorMessage.value = err?.data || err?.message || 'Pendaftaran gagal'
     showError.value = true
   } finally {
     isCheckingOut.value = false

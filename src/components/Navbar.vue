@@ -26,7 +26,14 @@
       </div>
 
       <div class="flex justify-end gap-x-3 items-center flex-shrink-0 w-56">
-
+        <router-link
+          v-if="userData && !userData.is_admin"
+          to="/cart"
+          :class="`relative hidden lg:inline-flex items-center justify-center w-11 h-11 rounded-full border-2 ${styles.border} ${styles.buttonText} hover:scale-105 transition-all duration-300`"
+          aria-label="Cart"
+        >
+          <i class="ri-shopping-cart-2-line text-2xl" />
+        </router-link>
         <div v-if="isLoading" class="w-12 h-12 rounded-full bg-gray-300"></div>
         <router-link v-else-if="userData" to="/account/profile" class="block">
           <img
@@ -64,7 +71,7 @@
       <ul :class="`flex flex-col space-y-4 ${styles.text} text-[20px] font-medium`">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/my-events">MyEvent</router-link></li>
-
+        <li v-if="userData && !userData.is_admin"><router-link to="/cart">Keranjang</router-link></li>
         <li>
           <button @click="aboutus" class="transition-all duration-3000 hover:scale-105 cursor-pointer">
             About Us
@@ -98,7 +105,8 @@ const darkThemePaths = [
   '/account/profile',
   '/account/password',
   '/events/upload',
-  '/events/preview'
+  '/events/preview',
+  '/cart'
 ]
 
 const isDarkTheme = computed(() => {

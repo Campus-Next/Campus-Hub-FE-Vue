@@ -136,15 +136,24 @@
           >
             Kapasitas Penuh
           </button>
-          <button
-            v-else
-            type="button"
-            class="bg-[#027FFF] hover:bg-[#0066CC] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-medium w-full h-11 rounded-lg text-white text-[16px] transition-colors"
-            :disabled="isRegistering"
-            @click="handleRegister"
-          >
-            {{ isRegistering ? 'Mendaftar...' : 'Daftar Sekarang' }}
-          </button>
+          <template v-else>
+            <button
+              type="button"
+              class="bg-[#027FFF] hover:bg-[#0066CC] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-medium w-full h-11 rounded-lg text-white text-[16px] transition-colors"
+              :disabled="isAdding"
+              @click="handleAddToCart"
+            >
+              {{ isAdding ? 'Menambahkan...' : 'Tambah ke Keranjang' }}
+            </button>
+            <button
+              type="button"
+              class="bg-white border-2 border-[#027FFF] hover:bg-[#EAF4FF] font-medium w-full h-11 rounded-lg text-[#027FFF] text-[16px] transition-colors"
+              :disabled="isRegistering"
+              @click="handleRegister"
+            >
+              {{ isRegistering ? 'Mendaftar...' : 'Daftar Sekarang' }}
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -160,6 +169,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchEvent, enrollEvent, fetchUniqueCode } from '../../services/api'
 import { useAuth } from '../../composables/useAuth'
+import { useCart } from '../../composables/useCart'
 import Navbar from '../../components/Navbar.vue'
 import { getEventImageUrl } from '../../utils/helpers'
 import type { Event } from '../../types'
@@ -167,8 +177,10 @@ import type { Event } from '../../types'
 const route = useRoute()
 const router = useRouter()
 const { getToken } = useAuth()
+const { add } = useCart()
 
 const eventData = ref<Event | null>(null)
+const isAdding = ref(false)
 const error = ref<string | null>(null)
 const isLoaded = ref(false)
 const isExiting = ref(false)
@@ -219,6 +231,22 @@ const handleRegister = async () => {
     feedback.value = err?.data || err?.message || 'Gagal mendaftar ke acara.'
   } finally {
     isRegistering.value = false
+  }
+}
+
+const handleAddToCart = async () => {
+  if (!eventData.value || !ensureAuth()) return
+  isAdding.value = true
+  feedback.value = ''
+  try {
+    await add(eventData.value.id, 1)
+    feedbackError.value = false
+    feedback.value = 'Acara ditambahkan ke keranjang.'
+  } catch (err: any) {
+    feedbackError.value = true
+    feedback.value = err?.data || err?.message || 'Gagal menambahkan ke keranjang.'
+  } finally {
+    isAdding.value = false
   }
 }
 
