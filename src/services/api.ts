@@ -76,14 +76,29 @@ export const fetchEvent = async (id: number): Promise<Event> => {
   return json.data
 }
 
+export const fetchCategories = async (): Promise<ApiResponse<Event[]>> => {
+  if (MOCK_ENABLED) {
+    await mockDelay()
+    return { success: true, message: 'Mock', data: mockEvents.events as any }
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/categories`)
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.message || 'Error fetching categories')
+  }
+
+  return data
+}
+
 export const login = async (credentials: { email: string; password: string }) => {
   if (MOCK_ENABLED) {
     await mockDelay()
     const mockPayload = {
       id: 1,
-      fullname: 'Test User',
+      name: 'Test User',
       email: credentials.email,
-      phone: '081234567890',
       is_admin: false,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
@@ -327,9 +342,8 @@ export const loginAdmin = async (credentials: { email: string; password: string 
     await mockDelay()
     const mockPayload = {
       id: 2,
-      fullname: 'Admin User',
+      name: 'Admin User',
       email: credentials.email,
-      phone: '081234567891',
       is_admin: true,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)

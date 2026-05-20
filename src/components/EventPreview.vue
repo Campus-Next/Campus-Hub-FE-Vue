@@ -8,9 +8,6 @@
       
       <!-- Event Details -->
       <div class="w-full md:w-2/3 space-y-6">
-        <span class="bg-[#027FFF] font-regular px-8 py-1 rounded-full text-white text-[14px] sm:text-[12px]">
-          {{ categoryName }}
-        </span>
         <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">
           {{ eventData.title }}
         </h1>
@@ -69,15 +66,6 @@
 
         <div class="border-b-2 border-[#003266] w-full my-4" />
         
-        <!-- Speaker Info -->
-        <div class="lecturer flex gap-2 ml-2 w-auto">
-          <img :src="eventData.speakerPreview" alt="Profile" class="w-16 h-16 rounded-full object-cover">
-          <div class="lecturername flex flex-col ml-4 gap-2 justify-center">
-            <span class="font-semibold text-[16px] sm:text-[14px]">{{ eventData.speaker }}</span>
-            <span class="text-regular text-[14px] sm:text-[12px]">{{ eventData.role }}</span>
-          </div>
-        </div>
-        
         <div class="border-b-2 border-[#003266] w-full my-4" />
         
         <!-- Description -->
@@ -105,9 +93,6 @@ import ChairIcon from '../assets/image/chair.svg'
 
 const props = defineProps<{
   eventData: any
-  getCategoryName: (category: string) => string
 }>()
-
-const categoryName = computed(() => props.getCategoryName(props.eventData.category))
 </script>
 

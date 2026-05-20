@@ -48,12 +48,12 @@
             >
               <div class="event-data flex items-center">
                 <img
-                  :src="event.photo ? `${storage}/${event.photo}` : `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(event.fullname)}&size=250`"
-                  :alt="event.fullname"
+                  :src="`https://eu.ui-avatars.com/api/?name=${encodeURIComponent(event.name || 'Participant')}&size=250`"
+                  :alt="event.name"
                   class="w-20 h-20 object-cover rounded-full my-2"
                 >
                 <div class="event-details flex flex-col px-4">
-                  <span class="event-title block font-semibold text-lg mb-2">{{ event.fullname }}</span>
+                  <span class="event-title block font-semibold text-lg mb-2">{{ event.name }}</span>
                   <span class="event-date text-sm text-gray-500 mb-1 block">
                     Join date: {{ new Date(event.join_date).toLocaleDateString() }}
                   </span>
@@ -87,17 +87,17 @@ const storage = import.meta.env.VITE_STORAGE_BASE_URL
 useAuthCheck(true)
 
 const { statusFilter, handleStatusFilter, filteredByStatus, statusCounts } = useStatusFilter(events)
-const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange } = useEventFilters(filteredByStatus, 'fullname', 'join_date')
+const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange } = useEventFilters(filteredByStatus, 'name', 'join_date')
 
 const sortedEvents = computed(() => {
   const filtered = filteredByStatus.value.filter(event => 
-    event.fullname.toLowerCase().includes(searchQuery.value.toLowerCase())
+    event.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
   const sorted = [...filtered]
   if (sortOption.value === 'date') {
     return sorted.sort((a, b) => new Date(a.join_date).getTime() - new Date(b.join_date).getTime())
   } else if (sortOption.value === 'title') {
-    return sorted.sort((a, b) => a.fullname.localeCompare(b.fullname))
+    return sorted.sort((a, b) => a.name.localeCompare(b.name))
   }
   return sorted
 })

@@ -22,14 +22,6 @@
                   alt="Foto Profil"
                   class="w-full aspect-square rounded-full object-cover"
                 />
-                <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 rounded-full cursor-pointer">
-                  <label for="upload-photo" class="cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-white">
-                      <path d="M16.862 3.487a2.5 2.5 0 0 1 3.536 3.536l-10.37 10.37a1.5 1.5 0 0 1-.635.377l-4.657 1.33a.75.75 0 0 1-.92-.92l1.33-4.657a1.5 1.5 0 0 1 .377-.635l10.37-10.37Zm2.475 2.12a1 1 0 0 0-1.414-1.414l-10.37 10.37a.5.5 0 0 0-.126.212l-.92 3.222 3.222-.92a.5.5 0 0 0 .212-.126l10.37-10.37Z" />
-                    </svg>
-                  </label>
-                  <input id="upload-photo" type="file" accept="image/*" class="hidden" @change="handleImageChange" />
-                </div>
               </div>
 
               <div class="form flex flex-col w-full lg:w-10/12 gap-12 mt-6 lg:mt-0">
@@ -42,7 +34,7 @@
                         <input
                           type="text"
                           id="name"
-                          v-model="user.fullname"
+                          v-model="user.name"
                           class="transition duration-300 w-full focus:outline-none"
                           placeholder="Masukkan Nama"
                         />
@@ -66,20 +58,6 @@
                     </div>
                   </div>
 
-                  <div class="field-pair flex flex-col lg:flex-row lg:items-center gap-4 w-full">
-                    <label for="phone" class="font-semibold text-[16px] lg:text-[20px] hidden sm:block lg:w-4/12">Nomor Telepon</label>
-                    <div class="flex flex-col sm:flex-col sm:items-start sm:gap-2 lg:w-8/12">
-                      <label for="phone" class="sm:block lg:hidden font-semibold text-[16px]">Nomor Telepon</label>
-                      <div class="input-box p-3 border-2 border-[#027FFF] rounded-lg hover:shadow-lg transition duration-300 px-4 py-2 w-full focus:ring focus:ring-blue-200 focus:outline-none">
-                        <input
-                          type="text"
-                          id="phone"
-                          v-model="user.nomor_telepon"
-                          class="transition duration-300 w-full focus:outline-none"
-                          placeholder="Masukkan Nomor Telepon"
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -177,10 +155,8 @@ import PopUpGagal from '../../components/PopUpGagal.vue'
 import { fetchUserProfile, updateUserProfile } from '../../services/api'
 
 interface User {
-  fullname: string
+  name: string
   email: string
-  nomor_telepon: string
-  photo: string | null
 }
 
 const router = useRouter()
@@ -188,15 +164,11 @@ const storage = import.meta.env.VITE_STORAGE_BASE_URL
 
 const activePage = ref('info-personal')
 const user = ref<User>({
-  fullname: '',
-  email: '',
-  nomor_telepon: '',
-  photo: null
+  name: '',
+  email: ''
 })
 const showDeletePopUp = ref(false)
 const showLogoutPopUp = ref(false)
-const selectedImage = ref<string | null>(null)
-const image = ref<File | null>(null)
 const isProcessing = ref(false)
 const datas = ref<string | null>(null)
 const showBerhasil = ref(false)
@@ -204,33 +176,17 @@ const showGagal = ref(false)
 
 const token = localStorage.getItem('token')
 
-const isFormValid = computed(() => user.value.fullname && user.value.email && user.value.nomor_telepon)
+const isFormValid = computed(() => user.value.name && user.value.email)
 
 const userPhoto = computed(() => {
-  if (selectedImage.value) return selectedImage.value
-  if (user.value.photo) return `${storage}/${user.value.photo}`
-  return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(user.value.fullname || 'User')}&size=250`
+  return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(user.value.name || 'User')}&size=250`
 })
-
-const handleImageChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    image.value = file
-    const imageUrl = URL.createObjectURL(file)
-    selectedImage.value = imageUrl
-  }
-}
 
 const handleUpdate = async () => {
   isProcessing.value = true
   const formData = new FormData()
-  formData.append('name', user.value.fullname)
+  formData.append('name', user.value.name)
   formData.append('email', user.value.email)
-  formData.append('phone', user.value.nomor_telepon)
-  if (selectedImage.value && image.value) {
-    formData.append('photo', image.value)
-  }
 
   try {
     await updateUserProfile(formData, token || '')
