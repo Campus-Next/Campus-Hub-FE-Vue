@@ -222,19 +222,20 @@ export const createEventLink = (
   })
 
 export const updateEventLink = (
+  eventId: number | string,
   linkId: number | string,
   payload: { title?: string; url?: string },
   token: string,
 ) =>
-  request<EventLink>(`/event-links/${linkId}`, {
+  request<EventLink>(`/events/${eventId}/links/${linkId}`, {
     method: 'PATCH',
     headers: buildHeaders(token, true),
     body: JSON.stringify(payload),
   })
 
-export const deleteEventLink = (linkId: number | string, token: string) =>
+export const deleteEventLink = (eventId: number | string, linkId: number | string, token: string) =>
   request<{ message: string }>(
-    `/event-links/${linkId}`,
+    `/events/${eventId}/links/${linkId}`,
     { method: 'DELETE', headers: buildHeaders(token) },
     { unwrap: false },
   )
