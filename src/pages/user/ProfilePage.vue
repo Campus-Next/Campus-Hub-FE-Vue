@@ -183,11 +183,17 @@ const userPhoto = computed(() => {
 const handleUpdate = async () => {
   isProcessing.value = true
   try {
+    const oldUserDataStr = localStorage.getItem('user')
+    const oldUserData = oldUserDataStr ? JSON.parse(oldUserDataStr) : {}
+
     const updated = await updateUserProfile(
       { name: user.value.name, email: user.value.email },
       token || '',
     )
-    localStorage.setItem('user', JSON.stringify(updated))
+    localStorage.setItem('user', JSON.stringify({
+      ...updated,
+      is_admin: oldUserData.is_admin === true
+    }))
     datas.value = 'Profil berhasil diubah'
     showBerhasil.value = true
     setTimeout(() => {
