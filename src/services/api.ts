@@ -36,8 +36,15 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    const err: ApiError = new Error(body?.message || response.statusText)
-    err.data = body?.message || body
+    let errMsg = body?.message || response.statusText
+    if (body?.errors && typeof body.errors === 'object') {
+      const errorList = Object.values(body.errors).flat()
+      if (errorList.length > 0) {
+        errMsg = errorList.join(', ')
+      }
+    }
+    const err: ApiError = new Error(errMsg)
+    err.data = errMsg
     err.status = response.status
     throw err
   }
