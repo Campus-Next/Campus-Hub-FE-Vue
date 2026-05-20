@@ -1,17 +1,3 @@
-import { CATEGORIES } from '../constants'
-
-export function getCategoryRoute(categoryName: string): string {
-  const categoryMap: Record<string, string> = {
-    'Seminar': CATEGORIES.seminar.route,
-    'Webinar': CATEGORIES.webinar.route,
-    'Kuliah Tamu': CATEGORIES['kuliah-tamu'].route,
-    'Sertifikasi': CATEGORIES.sertifikasi.route,
-    'Workshop': CATEGORIES.workshop.route
-  }
-
-  return categoryMap[categoryName] || '/'
-}
-
 export function formatDate(dateString: string): string {
   const date = new Date(dateString)
   return date.toLocaleDateString('id-ID', {
@@ -23,4 +9,14 @@ export function formatDate(dateString: string): string {
 
 export function formatTime(timeString: string): string {
   return timeString
+}
+
+import defaultPoster from '../assets/image/Poster.svg'
+
+export function getEventImageUrl(event: any): string {
+  if (event && event.images && event.images.length > 0) {
+    const storage = import.meta.env.VITE_STORAGE_BASE_URL || 'http://localhost:8000/storage'
+    return `${storage}/${event.images[0].path}`
+  }
+  return defaultPoster
 }

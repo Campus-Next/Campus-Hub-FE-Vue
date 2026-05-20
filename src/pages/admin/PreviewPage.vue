@@ -19,9 +19,7 @@
           <img class="w-full h-auto object-cover rounded-2xl shadow-lg" :src="eventsPreview" alt="Poster Event">
         </div>
         <div class="description text-left mt-6 lg:mt-0 lg:mx-8">
-          <span class="bg-[#027FFF] font-regular px-4 py-1 lg:px-8 lg:py-1 rounded-full text-white text-[12px] lg:text-[14px]">
-            {{ CategoryName }}
-          </span>
+          <div class="border-b-2 border-[#003266] w-full lg:w-[486px] my-4" />
           <h1 class="font-bold text-[20px] lg:text-[32px] py-4 max-w-[40rem]">
             {{ eventData.title }}
           </h1>
@@ -29,10 +27,7 @@
 
           <div class="flex gap-2 ml-2">
             <img :src="DateIcon" alt="Calendar" class="text-4xl sm:text-3xl">
-            <span class="font-medium text-[16px] sm:text-[14px] mt-2">{{ eventData.date }}</span>
-            <span class="font-medium text-[16px] sm:text-[14px] mt-2 ml-auto mr-2">
-              {{ eventData.start_time }} - {{ eventData.end_time }}
-            </span>
+            <span class="font-medium text-[16px] sm:text-[14px] mt-2">{{ eventData.start_date }} - {{ eventData.end_date }}</span>
           </div>
           <div class="flex gap-2 ml-1 my-4">
             <i class="ri-map-pin-2-fill text-4xl sm:text-3xl" />
@@ -41,22 +36,14 @@
             </span>
             <img :src="Chair" alt="Location" class="text-4xl sm:text-3xl ml-auto">
             <span class="font-medium text-[16px] sm:text-[14px] mt-2 mr-2">
-              {{ eventData.slot }} Kursi
+              {{ eventData.max_participants }} Kursi
             </span>
           </div>
 
           <div class="border-b-2 border-[#003266] w-full lg:w-[486px] my-4" />
-          <div class="lecturer flex gap-2 ml-2">
-            <img :src="speakerPreview" alt="Profile" class="w-[40px] h-[40px] rounded-full object-cover">
-            <div class="lecturername flex flex-col ml-4">
-              <span class="font-semibold text-[14px] lg:text-[16px]">{{ eventData.speaker }}</span>
-              <span class="text-regular text-[12px] lg:text-[14px]">{{ eventData.role }}</span>
-            </div>
-          </div>
-          <div class="border-b-2 border-[#003266] w-full lg:w-[486px] my-4" />
           <div>
             <p class="eventdescription font-regular text-wrap text-[14px] lg:text-[16px] block w-full lg:max-w-[486px]">
-              {{ eventData.desc }}
+              {{ eventData.description }}
             </p>
           </div>
         </div>
@@ -96,17 +83,7 @@ const pageAnimation = ref('page-enter')
 
 useAuthCheck(true)
 
-const categoryMap: Record<number, string> = {
-  1: 'Webinar',
-  2: 'Seminar',
-  3: 'Kuliah Tamu',
-  4: 'Workshop',
-  5: 'Sertifikasi',
-}
-
-const CategoryName = computed(() => categoryMap[eventData.value?.category])
 const eventsPreview = computed(() => eventData.value?.eventsPreview)
-const speakerPreview = computed(() => eventData.value?.speakerPreview)
 
 const goBack = () => {
   router.push({ path: '/events/upload', state: { data: eventData.value } })
@@ -126,18 +103,15 @@ const handleUpload = async () => {
     }
 
     const formData = new FormData()
-    formData.append('event_img', eventData.value.event_img)
-    formData.append('category', eventData.value.category)
     formData.append('title', eventData.value.title)
-    formData.append('date', eventData.value.date)
-    formData.append('start_time', eventData.value.start_time)
-    formData.append('end_time', eventData.value.end_time)
-    formData.append('desc', eventData.value.desc)
-    formData.append('speaker', eventData.value.speaker)
-    formData.append('role', eventData.value.role)
-    formData.append('slot', eventData.value.slot)
-    formData.append('location', eventData.value.location)
-    formData.append('speaker_img', eventData.value.speaker_img)
+    formData.append('description', eventData.value.description)
+    formData.append('start_date', eventData.value.start_date)
+    formData.append('end_date', eventData.value.end_date)
+    formData.append('max_participants', eventData.value.max_participants)
+    formData.append('registration_fee', eventData.value.registration_fee)
+    formData.append('registration_open', eventData.value.registration_open)
+    formData.append('registration_deadline', eventData.value.registration_deadline)
+    formData.append('location', eventData.value.isOffline ? eventData.value.location : 'Online')
 
     await createEvent(formData, token)
     router.push('/my-events')

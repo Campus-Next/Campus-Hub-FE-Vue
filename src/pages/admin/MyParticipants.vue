@@ -41,22 +41,23 @@
 
           <div class="event-list flex flex-col gap-6 px-4 sm:px-6 lg:px-20 py-2">
             <div
-              v-for="(event, index) in sortedEvents"
-              :key="`${event.id}-${statusFilter}-${index}`"
+              v-for="(participant, index) in sortedEvents"
+              :key="`${participant.id}-${statusFilter}-${index}`"
               class="event-box p-4 border border-customBlue rounded-2xl shadow-md hover:shadow-lg transition duration-300 px-4 py-2 flex justify-between items-center animate-slideIn opacity-0"
               :style="{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }"
             >
               <div class="event-data flex items-center">
                 <img
-                  :src="event.photo ? `${storage}/${event.photo}` : `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(event.fullname)}&size=250`"
-                  :alt="event.fullname"
+                  :src="`https://eu.ui-avatars.com/api/?name=${encodeURIComponent(participant.user?.name || 'Participant')}&size=250`"
+                  :alt="participant.user?.name"
                   class="w-20 h-20 object-cover rounded-full my-2"
                 >
                 <div class="event-details flex flex-col px-4">
-                  <span class="event-title block font-semibold text-lg mb-2">{{ event.fullname }}</span>
+                  <span class="event-title block font-semibold text-lg mb-2">{{ participant.user?.name }}</span>
                   <span class="event-date text-sm text-gray-500 mb-1 block">
-                    Join date: {{ new Date(event.join_date).toLocaleDateString() }}
+                    Join date: {{ participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A' }}
                   </span>
+                  <span class="text-xs text-gray-400">Status: {{ participant.status }}</span>
                 </div>
               </div>
             </div>
@@ -76,37 +77,55 @@ import SearchSort from '../../components/SearchSort.vue'
 import FilterTabs from '../../components/FilterTabs.vue'
 import { fetchEventParticipants } from '../../services/api'
 import { useAuthCheck } from '../../composables/useAuthCheck'
-import { useEventFilters, useStatusFilter } from '../../composables/useFilters'
+import { useStatusFilter } from '../../composables/useFilters'
+import type { EventParticipant } from '../../types'
 
 const router = useRouter()
 const route = useRoute()
-const events = ref<any[]>([])
+const events = ref<EventParticipant[]>([])
 const isLoading = ref(true)
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
+const searchQuery = ref('')
+const sortOption = ref('date')
+const isDropdownOpen = ref(false)
 
 useAuthCheck(true)
 
-const { statusFilter, handleStatusFilter, filteredByStatus, statusCounts } = useStatusFilter(events)
-const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange } = useEventFilters(filteredByStatus, 'fullname', 'join_date')
+const { statusFilter, handleStatusFilter, filteredByStatus, statusCounts } = useStatusFilter<EventParticipant>(events)
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const handleSortChange = (option: string) => {
+  sortOption.value = option
+  isDropdownOpen.value = false
+}
 
 const sortedEvents = computed(() => {
-  const filtered = filteredByStatus.value.filter(event => 
-    event.fullname.toLowerCase().includes(searchQuery.value.toLowerCase())
+  const q = searchQuery.value.toLowerCase()
+  const filtered = filteredByStatus.value.filter(p =>
+    (p.user?.name || '').toLowerCase().includes(q),
   )
   const sorted = [...filtered]
   if (sortOption.value === 'date') {
-    return sorted.sort((a, b) => new Date(a.join_date).getTime() - new Date(b.join_date).getTime())
-  } else if (sortOption.value === 'title') {
-    return sorted.sort((a, b) => a.fullname.localeCompare(b.fullname))
+    return sorted.sort(
+      (a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime(),
+    )
+  }
+  if (sortOption.value === 'title') {
+    return sorted.sort((a, b) => (a.user?.name || '').localeCompare(b.user?.name || ''))
   }
   return sorted
 })
 
-watch(() => route.state?.activeTab, (activeTab) => {
-  if (activeTab) {
-    statusFilter.value = activeTab as string
-  }
-})
+watch(
+  () => (route as any).state?.activeTab,
+  (activeTab) => {
+    if (activeTab) {
+      statusFilter.value = activeTab as any
+    }
+  },
+)
 
 onMounted(async () => {
   window.scrollTo(0, 0)

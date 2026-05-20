@@ -20,6 +20,9 @@
                 <form @submit.prevent="handleSubmit">
                   <div class="form lg:flex lg:items-center gap-4 lg:w-full pl-0 lg:mb-12">
                     <div class="form-label flex flex-col gap-6 lg:gap-20 w-full lg:w-4/12">
+                      <label for="current-password" class="font-semibold text-[16px] lg:text-[20px] hidden sm:block">
+                        Password Saat Ini
+                      </label>
                       <label for="new-password" class="font-semibold text-[16px] lg:text-[20px] hidden sm:block">
                         Password Baru
                       </label>
@@ -31,7 +34,29 @@
                     <div class="form-input flex flex-col gap-4 sm:gap-20 w-full sm:w-8/12 lg:w-10/12">
                       <div class="w-full flex flex-col relative">
                         <div class="flex flex-col sm:flex-col sm:items-start sm:gap-2">
-                          <label for="phone" class="sm:block lg:hidden font-semibold text-[16px]">Password Baru</label>
+                          <label for="currentpassword" class="sm:block lg:hidden font-semibold text-[16px]">Password Saat Ini</label>
+                          <div class="flex py-2 w-full">
+                            <input
+                              :type="showCurrentPassword ? 'text' : 'password'"
+                              id="currentpassword"
+                              v-model="currentPassword"
+                              placeholder="Masukkan Password Saat Ini..."
+                              class="p-3 border border-customBlue rounded-lg flex hover:shadow-lg transition duration-300 px-4 py-2 w-full focus:ring focus:ring-blue-200 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              @click="showCurrentPassword = !showCurrentPassword"
+                              class="absolute right-3 py-2 text-gray-500 hover:text-gray-700"
+                            >
+                              <i :class="showCurrentPassword ? 'ri-eye-line text-2xl' : 'ri-eye-close-line text-2xl'"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="w-full flex flex-col relative">
+                        <div class="flex flex-col sm:flex-col sm:items-start sm:gap-2">
+                          <label for="newpassword" class="sm:block lg:hidden font-semibold text-[16px]">Password Baru</label>
                           <div class="flex py-2 w-full">
                             <input
                               :type="showNewPassword ? 'text' : 'password'"
@@ -162,6 +187,7 @@
         <PopUpUpdate
           v-if="showUpdatePopUp"
           :setShowPopUp="(val) => showUpdatePopUp = val"
+          :current-password="currentPassword"
           :password="newPassword"
           :confirmation="passwordConfirmation"
         />
@@ -181,18 +207,25 @@ import PopUpUpdate from '../../components/PopUpUpdate.vue'
 const router = useRouter()
 
 const activePage = ref('password')
+const currentPassword = ref('')
 const newPassword = ref('')
 const passwordConfirmation = ref('')
 const passwordError = ref('')
 const confirmationError = ref('')
+const showCurrentPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmationPassword = ref(false)
 const showDeletePopUp = ref(false)
 const showLogoutPopUp = ref(false)
 const showUpdatePopUp = ref(false)
 
-const isFormValid = computed(() => 
-  newPassword.value && passwordConfirmation.value && !passwordError.value && !confirmationError.value
+const isFormValid = computed(
+  () =>
+    currentPassword.value &&
+    newPassword.value &&
+    passwordConfirmation.value &&
+    !passwordError.value &&
+    !confirmationError.value,
 )
 
 const handlePasswordChange = () => {

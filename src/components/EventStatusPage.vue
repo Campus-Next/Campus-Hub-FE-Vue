@@ -23,47 +23,66 @@
         <div class="PosterEvent w-full lg:w-3/12">
           <img
             class="w-full object-cover rounded-2xl shadow-lg"
-            :src="`${storage}/${eventData.foto_event}`"
+            :src="getEventImageUrl(eventData)"
             alt="Poster Event"
           />
         </div>
 
         <!-- Event Description -->
         <div class="description text-left flex-1 max-w-full px-6">
-          <span class="bg-[#027FFF] font-regular px-8 py-1 rounded-full text-white text-[14px] sm:text-[12px]">
-            {{ eventData.category_name }}
-          </span>
-          <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">{{ eventData.judul }}</h1>
+          <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">{{ eventData.title }}</h1>
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
           <!-- Event Details Grid -->
           <div class="event-details grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-            <EventDetailItem icon="date.svg" label="Tanggal" :value="eventData.date" />
-            <EventDetailItem icon="clock.svg" label="Waktu" :value="`${eventData.start_time} - ${eventData.end_time}`" />
-            <EventDetailItem icon="location.svg" label="Lokasi" :value="eventData.tempat" />
-            <EventDetailItem icon="chair.svg" label="Kapasitas" :value="`${eventData.available_slot} Kursi Tersedia`" />
-          </div>
-
-          <div class="border-b-2 border-[#003266] w-full my-4"></div>
-
-          <!-- Lecturer Info -->
-          <div class="lecturer flex gap-2 w-auto">
-            <img
-              :src="`${storage}/${eventData.foto_pembicara}`"
-              alt="Profile"
-              class="w-16 h-16 rounded-full object-cover"
-            />
-            <div class="lecturername flex flex-col ml-4 gap-2 justify-center">
-              <span class="font-semibold text-[16px] sm:text-[14px]">{{ eventData.pembicara }}</span>
-              <span class="text-regular text-[14px] sm:text-[12px]">{{ eventData.role }}</span>
-            </div>
+            <EventDetailItem icon="date.svg" label="Tanggal" :value="new Date(eventData.start_date).toLocaleDateString('id-ID')" />
+            <EventDetailItem icon="clock.svg" label="Waktu" :value="`${new Date(eventData.start_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})} - ${new Date(eventData.end_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}`" />
+            <EventDetailItem icon="location.svg" label="Lokasi" :value="eventData.location" />
+            <EventDetailItem icon="chair.svg" label="Kapasitas" :value="`${eventData.max_participants} Kursi`" />
           </div>
 
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
 
           <div>
             <p class="eventdescription font-regular text-wrap text-[16px] sm:text-[14px] block w-full">
-              {{ eventData.deskripsi }}
+              {{ eventData.description }}
+            </p>
+          </div>
+
+          <div v-if="eventData.event_links && eventData.event_links.length > 0" class="event-links mt-6">
+            <h3 class="font-semibold text-[18px] mb-3">Tautan Acara</h3>
+            <ul class="flex flex-col gap-2">
+              <li v-for="link in eventData.event_links" :key="link.id">
+                <a
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center gap-3 p-3 rounded-lg border border-[#027FFF] bg-blue-50 hover:bg-blue-100 transition-colors"
+                >
+                  <i class="ri-external-link-line text-[#027FFF] text-xl" />
+                  <span class="font-medium text-[#003266] text-[14px]">{{ link.title }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="status === 'registered' && code.length === 4" class="mt-6">
+            <h3 class="font-semibold text-[18px] mb-3">Kode Tiket</h3>
+            <div class="unique-code bg-[#027FFF] w-fit flex flex-col items-center px-6 py-4 rounded-xl">
+              <div class="flex gap-2 justify-center">
+                <input
+                  v-for="(char, index) in code"
+                  :key="index"
+                  type="text"
+                  maxlength="1"
+                  :value="char"
+                  readonly
+                  class="w-10 h-12 text-center text-[24px] font-bold border border-gray-400 rounded-lg bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Tunjukkan kode ini kepada panitia saat check-in.
             </p>
           </div>
         </div>
@@ -139,12 +158,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useEventDetail } from '../composables/useEventDetail'
 import { fetchUniqueCode } from '../services/api'
-import { STORAGE_BASE_URL, EVENT_STATUS } from '../constants'
 import Navbar from '../components/Navbar.vue'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 import ErrorMessage from './ErrorMessage.vue'
 import EventDetailItem from './EventDetailItem.vue'
 import PopUpCancel from '../components/PopUpCancel.vue'
+import { getEventImageUrl } from '../utils/helpers'
 
 interface Props {
   status: 'registered' | 'cancelled' | 'attended' | 'absent'
@@ -157,7 +176,6 @@ const router = useRouter()
 const { getToken, requireAuth } = useAuth()
 const { eventData, loadEvent } = useEventDetail()
 
-const storage = STORAGE_BASE_URL
 const loading = ref(true)
 const error = ref<string | null>(null)
 const code = ref<string[]>([])
@@ -248,9 +266,9 @@ onMounted(async () => {
     await loadEvent(eventId)
 
     if (props.status === 'registered' && token) {
-      const codeData = await fetchUniqueCode(Number(eventId), token)
-      if (codeData.kode_unik) {
-        code.value = codeData.kode_unik.split('')
+      const codeData = await fetchUniqueCode(eventId, token)
+      if (codeData.unique_code) {
+        code.value = codeData.unique_code.split('')
       }
     }
   } catch (err: any) {
@@ -268,17 +286,8 @@ onMounted(async () => {
 <style scoped>
 
 
-.page-enter {
-  animation: fadeIn 0.5s ease-in;
-}
-
 .page-exit {
   animation: fadeOut 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeOut {

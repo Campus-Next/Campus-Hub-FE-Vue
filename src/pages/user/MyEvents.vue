@@ -81,29 +81,30 @@
           </div>
 
           <div class="event-list flex flex-col gap-6 px-4 sm:px-6 lg:px-20 py-2">
-            <div v-if="sortedEvents.length > 0">
+            <div v-if="sortedEvents.length > 0" class="flex flex-col gap-6">
               <div
-                v-for="(event, index) in sortedEvents"
-                :key="`${event.id}-${statusFilter}-${index}`"
+                v-for="(participant, index) in sortedEvents"
+                :key="`${participant.id}-${statusFilter}-${index}`"
                 class="event-box p-4 border border-customBlue rounded-2xl shadow-md hover:shadow-lg transition duration-300 px-4 py-2 flex justify-between items-center cursor-pointer"
-                @click="router.push(`/my-events/${event.id}/view`)"
+                @click="router.push(`/my-events/${participant.event_id}/view`)"
               >
                 <div class="event-data flex items-center">
                   <img
-                    :src="`${storage}/${event.foto_event}`"
-                    :alt="event.judul"
+                    :src="getEventImageUrl(participant.event)"
+                    alt="Event"
                     class="w-20 h-20 object-cover rounded-full my-2"
                   />
                   <div class="event-details flex flex-col px-4">
                     <span class="event-title block font-semibold text-lg mb-2">
-                      {{ event.judul }}
+                      {{ participant.event?.title || 'Untitled Event' }}
                     </span>
                     <span class="event-date text-sm text-gray-500 mb-1 block">
-                      Join date: {{ new Date(event.join_date).toLocaleDateString() }}
+                      Join date: {{ participant.created_at ? new Date(participant.created_at).toLocaleDateString() : 'N/A' }}
                     </span>
+                    <span class="text-xs text-gray-400">Status: {{ participant.status }}</span>
                   </div>
                 </div>
-                <router-link :to="`/my-events/${event.id}/view`">
+                <router-link :to="`/my-events/${participant.event_id}/view`">
                   <i class="ri-more-fill text-4xl"></i>
                 </router-link>
               </div>
@@ -121,27 +122,20 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { fetchMyEvents } from '../../services/api'
 import Navbar from '../../components/Navbar.vue'
+import { getEventImageUrl } from '../../utils/helpers'
 
-interface Event {
-  id: number
-  judul: string
-  foto_event: string
-  join_date: string
-  status: string
-}
+import type { EventParticipant } from '../../types'
 
 const router = useRouter()
 const route = useRoute()
 
-const events = ref<Event[]>([])
+const events = ref<EventParticipant[]>([])
 const searchQuery = ref('')
 const sortOption = ref('date')
 const statusFilter = ref('All')
 const isDropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const isLoading = ref(true)
-
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value
@@ -157,46 +151,48 @@ const handleStatusFilter = (status: string) => {
 }
 
 const filteredEvents = computed(() => {
-  return events.value
-    .filter(event => event.judul.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    .filter(event => {
-      switch (statusFilter.value.toLowerCase()) {
-        case 'registered':
-          return event.status.toLowerCase() === 'registered'
-        case 'cancelled':
-          return event.status.toLowerCase() === 'cancelled'
-        case 'attended':
-          return event.status.toLowerCase() === 'attended'
-        case 'absent':
-          return event.status.toLowerCase() === 'absent'
-        case 'all':
-          return true
-        default:
-          return false
-      }
-    })
+  const q = searchQuery.value.toLowerCase()
+  const targetStatus = statusFilter.value.toLowerCase()
+  return events.value.filter(p => {
+    const title = (p.event?.title || '').toLowerCase()
+    if (!title.includes(q)) return false
+    if (targetStatus === 'all') return true
+    return p.status?.toLowerCase() === targetStatus
+  })
 })
 
 const sortedEvents = computed(() => {
   return [...filteredEvents.value].sort((a, b) => {
     if (sortOption.value === 'date') {
-      return new Date(a.join_date).getTime() - new Date(b.join_date).getTime()
-    } else if (sortOption.value === 'title') {
-      return a.judul.localeCompare(b.judul)
+      return new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
+    }
+    if (sortOption.value === 'title') {
+      return (a.event?.title || '').localeCompare(b.event?.title || '')
     }
     return 0
   })
 })
 
-const allCount = computed(() => events.value.length)
-const registeredCount = computed(() => events.value.filter(e => e.status.toLowerCase() === 'registered').length)
-const canceledCount = computed(() => events.value.filter(e => e.status.toLowerCase() === 'cancelled').length)
-const attendedCount = computed(() => events.value.filter(e => e.status.toLowerCase() === 'attended').length)
-const absentCount = computed(() => events.value.filter(e => e.status.toLowerCase() === 'absent').length)
+const counts = computed(() => {
+  const acc = { all: 0, registered: 0, cancelled: 0, attended: 0, absent: 0 } as Record<string, number>
+  for (const p of events.value) {
+    acc.all++
+    const key = p.status?.toLowerCase()
+    if (key in acc) acc[key]++
+  }
+  return acc
+})
+
+const allCount = computed(() => counts.value.all)
+const registeredCount = computed(() => counts.value.registered)
+const canceledCount = computed(() => counts.value.cancelled)
+const attendedCount = computed(() => counts.value.attended)
+const absentCount = computed(() => counts.value.absent)
 
 onMounted(async () => {
-  if (route.state?.activeTab) {
-    statusFilter.value = route.state.activeTab as string
+  const activeTab = (route as any).state?.activeTab
+  if (activeTab) {
+    statusFilter.value = activeTab as string
   }
 
   window.scrollTo(0, 0)

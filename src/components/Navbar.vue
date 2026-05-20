@@ -17,9 +17,6 @@
           <router-link to="/my-events" class="transition-all duration-3000 hover:scale-105">
             <li>My Events</li>
           </router-link>
-          <router-link to="/public-events" class="transition-all duration-3000 hover:scale-105">
-            <li>Public Events</li>
-          </router-link>
           <li>
             <button @click="aboutus" class="transition-all duration-3000 hover:scale-105 cursor-pointer">
               About Us
@@ -29,6 +26,7 @@
       </div>
 
       <div class="flex justify-end gap-x-3 items-center flex-shrink-0 w-56">
+
         <div v-if="isLoading" class="w-12 h-12 rounded-full bg-gray-300"></div>
         <router-link v-else-if="userData" to="/account/profile" class="block">
           <img
@@ -66,7 +64,7 @@
       <ul :class="`flex flex-col space-y-4 ${styles.text} text-[20px] font-medium`">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/my-events">MyEvent</router-link></li>
-        <li><router-link to="/public-events">Public Events</router-link></li>
+
         <li>
           <button @click="aboutus" class="transition-all duration-3000 hover:scale-105 cursor-pointer">
             About Us
@@ -84,12 +82,10 @@ import logo from '../assets/image/logo.svg'
 import logo2 from '../assets/image/logo2.svg'
 
 interface UserData {
-  fullname: string
-  photo: string | null
+  name: string
   is_admin?: boolean
 }
 
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 const route = useRoute()
 const router = useRouter()
 
@@ -126,10 +122,7 @@ const styles = computed(() => {
 
 const userPhoto = computed(() => {
   if (!userData.value) return ''
-  if (userData.value.photo && userData.value.photo !== 'null') {
-    return `${storage}/${userData.value.photo}`
-  }
-  return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(userData.value.fullname)}&size=48&background=6b7280&color=ffffff`
+  return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(userData.value.name)}&size=48&background=6b7280&color=ffffff`
 })
 
 const aboutus = () => {

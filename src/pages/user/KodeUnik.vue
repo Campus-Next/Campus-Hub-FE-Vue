@@ -66,18 +66,13 @@ const fadeClass = ref('fade-in')
 const loadUniqueCode = async () => {
   try {
     const data = await fetchUniqueCode(route.params.id as string, localStorage.getItem('token')!)
-    
-    if (data.access_token) {
-      localStorage.setItem('token', data.access_token)
-    }
-
-    const uniqueCode = data.kode_unik
+    const uniqueCode = data.unique_code
     if (uniqueCode && uniqueCode.length === 4) {
       code.value = uniqueCode.split('')
     } else {
       code.value = ['', '', '', '']
     }
-  } catch (error) {
+  } catch {
     code.value = ['', '', '', '']
   } finally {
     loading.value = false

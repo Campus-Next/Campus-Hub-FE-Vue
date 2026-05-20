@@ -81,7 +81,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { jwtDecode } from 'jwt-decode'
 import AuthLayout from '../../components/AuthLayout.vue'
 import Input from '../../components/Input.vue'
 import PopUpNotification from '../../components/PopUpNotification.vue'
@@ -103,49 +102,31 @@ const {
 } = useLoginForm()
 
 const handleLogin = async () => {
-  if (isFormValid.value) {
-    try {
-      isLoading.value = true
-      const data = await login({ 
-        email: email.value, 
-        password: password.value, 
-        remember: remember.value 
-      })
-      
-      console.log('Login response:', data)
-      message.value = data.message
-      localStorage.setItem('token', data.access_token)
-      
-      try {
-        const decoded = jwtDecode(data.access_token)
-        console.log('Decoded token:', decoded)
-        localStorage.setItem('user', JSON.stringify(decoded))
-      } catch (decodeError) {
-        console.error('JWT decode error:', decodeError)
-        // Fallback: simpan data user mock
-        const mockUserData = {
-          id: 1,
-          fullname: 'Test User',
-          email: email.value,
-          phone: '081234567890',
-          is_admin: false
-        }
-        localStorage.setItem('user', JSON.stringify(mockUserData))
-      }
+  if (!isFormValid.value) return
+  try {
+    isLoading.value = true
+    const data = await login({
+      email: email.value,
+      password: password.value,
+      remember: remember.value,
+    })
 
-      console.log('Redirecting to:', redirectPath)
-      setTimeout(() => {
-        window.location.href = redirectPath
-      }, 200)
-      setTimeout(() => {
-        isLoading.value = false
-      }, 1000)
-    } catch (error: any) {
-      console.error('Login error:', error)
-      message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
-      showGagal.value = true
+    const isAdmin = data.roles?.includes('admin') ?? false
+    localStorage.setItem('token', data.access_token)
+    localStorage.setItem('token_type', data.token_type)
+    localStorage.setItem('user', JSON.stringify({ ...data.user, is_admin: isAdmin }))
+
+    message.value = 'Login berhasil'
+    setTimeout(() => {
+      window.location.href = redirectPath
+    }, 200)
+    setTimeout(() => {
       isLoading.value = false
-    }
+    }, 1000)
+  } catch (err: any) {
+    message.value = err.data || 'Koneksi Timeout, Silahkan Coba Lagi'
+    showGagal.value = true
+    isLoading.value = false
   }
 }
 

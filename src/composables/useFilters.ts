@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 export function useEventFilters<T extends Record<string, any>>(
   events: any,
   searchKey: keyof T,
-  dateKey?: keyof T
+  dateKey?: keyof T,
 ) {
   const searchQuery = ref('')
   const sortOption = ref('date')
@@ -18,22 +18,23 @@ export function useEventFilters<T extends Record<string, any>>(
     isDropdownOpen.value = false
   }
 
-  const filteredEvents = computed(() =>
-    events.value.filter((event: T) =>
-      String(event[searchKey]).toLowerCase().includes(searchQuery.value.toLowerCase())
+  const filteredEvents = computed(() => {
+    const q = searchQuery.value.toLowerCase()
+    if (!q) return events.value as T[]
+    return (events.value as T[]).filter(event =>
+      String(event[searchKey]).toLowerCase().includes(q),
     )
-  )
+  })
 
   const sortedEvents = computed(() => {
     const sorted = [...filteredEvents.value]
     if (sortOption.value === 'date' && dateKey) {
-      return sorted.sort((a, b) => 
-        new Date(a[dateKey] as any).getTime() - new Date(b[dateKey] as any).getTime()
+      return sorted.sort(
+        (a, b) => new Date(a[dateKey] as any).getTime() - new Date(b[dateKey] as any).getTime(),
       )
-    } else if (sortOption.value === 'title') {
-      return sorted.sort((a, b) => 
-        String(a[searchKey]).localeCompare(String(b[searchKey]))
-      )
+    }
+    if (sortOption.value === 'title') {
+      return sorted.sort((a, b) => String(a[searchKey]).localeCompare(String(b[searchKey])))
     }
     return sorted
   })
@@ -45,78 +46,72 @@ export function useEventFilters<T extends Record<string, any>>(
     toggleDropdown,
     handleSortChange,
     filteredEvents,
-    sortedEvents
+    sortedEvents,
   }
 }
 
-export function useCategoryFilter<T extends { kategori_id: number }>(events: any) {
+export function useCategoryFilter<T extends { category_id?: number | null }>(events: any) {
   const categoryFilter = ref<string | number>('All')
 
   const handleCategoryFilter = (category: string | number) => {
     categoryFilter.value = category
   }
 
-  const filteredByCategory = computed(() =>
-    events.value.filter((event: T) =>
-      categoryFilter.value === 'All' ? true : event.kategori_id === categoryFilter.value
-    )
-  )
+  const filteredByCategory = computed(() => {
+    const filter = categoryFilter.value
+    if (filter === 'All') return events.value as T[]
+    return (events.value as T[]).filter(event => event.category_id === filter)
+  })
 
-  const categoryCounts = computed(() => ({
-    all: events.value.length,
-    webinar: events.value.filter((e: T) => e.kategori_id === 1).length,
-    seminar: events.value.filter((e: T) => e.kategori_id === 2).length,
-    kuliahTamu: events.value.filter((e: T) => e.kategori_id === 3).length,
-    workshop: events.value.filter((e: T) => e.kategori_id === 4).length,
-    sertifikasi: events.value.filter((e: T) => e.kategori_id === 5).length
-  }))
+  const categoryCounts = computed(() => {
+    const counts: Record<string, number> = { all: 0 }
+    for (const event of events.value as T[]) {
+      counts.all++
+      const key = String(event.category_id ?? 'uncategorized')
+      counts[key] = (counts[key] ?? 0) + 1
+    }
+    return counts
+  })
 
   return {
     categoryFilter,
     handleCategoryFilter,
     filteredByCategory,
-    categoryCounts
+    categoryCounts,
   }
 }
 
-export function useStatusFilter<T extends { status: string }>(events: any) {
-  const statusFilter = ref('All')
+const STATUS_KEYS = ['registered', 'cancelled', 'attended', 'absent'] as const
+type StatusKey = (typeof STATUS_KEYS)[number]
 
-  const handleStatusFilter = (status: string) => {
+export function useStatusFilter<T extends { status: string }>(events: any) {
+  const statusFilter = ref<'All' | StatusKey>('All')
+
+  const handleStatusFilter = (status: 'All' | StatusKey) => {
     statusFilter.value = status
   }
 
-  const filteredByStatus = computed(() =>
-    events.value.filter((event: T) => {
-      switch (statusFilter.value.toLowerCase()) {
-        case 'registered':
-          return event.status.toLowerCase() === 'registered'
-        case 'cancelled':
-          return event.status.toLowerCase() === 'cancelled'
-        case 'attended':
-          return event.status.toLowerCase() === 'attended'
-        case 'absent':
-          return event.status.toLowerCase() === 'absent'
-        case 'all':
-          return true
-        default:
-          return false
-      }
-    })
-  )
+  const filteredByStatus = computed(() => {
+    if (statusFilter.value === 'All') return events.value as T[]
+    return (events.value as T[]).filter(
+      event => event.status?.toLowerCase() === statusFilter.value,
+    )
+  })
 
-  const statusCounts = computed(() => ({
-    all: events.value.length,
-    registered: events.value.filter((e: T) => e.status.toLowerCase() === 'registered').length,
-    cancelled: events.value.filter((e: T) => e.status.toLowerCase() === 'cancelled').length,
-    attended: events.value.filter((e: T) => e.status.toLowerCase() === 'attended').length,
-    absent: events.value.filter((e: T) => e.status.toLowerCase() === 'absent').length
-  }))
+  const statusCounts = computed(() => {
+    const counts: Record<string, number> = { all: 0, registered: 0, cancelled: 0, attended: 0, absent: 0 }
+    for (const event of events.value as T[]) {
+      counts.all++
+      const key = event.status?.toLowerCase()
+      if (key in counts) counts[key]++
+    }
+    return counts
+  })
 
   return {
     statusFilter,
     handleStatusFilter,
     filteredByStatus,
-    statusCounts
+    statusCounts,
   }
 }

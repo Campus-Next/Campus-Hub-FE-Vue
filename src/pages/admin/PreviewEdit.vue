@@ -20,7 +20,7 @@
         </div>
         <div class="description text-left mt-6 lg:mt-0 lg:mx-8">
           <span class="bg-[#027FFF] font-regular px-4 py-1 lg:px-8 lg:py-1 rounded-full text-white text-[12px] lg:text-[14px]">
-            {{ CategoryName }}
+            Event
           </span>
           <h1 class="font-bold text-[20px] lg:text-[32px] py-4 max-w-[40rem]">
             {{ eventData.title }}
@@ -29,9 +29,9 @@
 
           <div class="flex gap-2 ml-2">
             <img :src="DateIcon" alt="Calendar" class="text-4xl sm:text-3xl">
-            <span class="font-medium text-[16px] sm:text-[14px] mt-2">{{ eventData.date }}</span>
+            <span class="font-medium text-[16px] sm:text-[14px] mt-2">{{ new Date(eventData.start_date).toLocaleDateString('id-ID') }}</span>
             <span class="font-medium text-[16px] sm:text-[14px] mt-2 ml-auto mr-2">
-              {{ eventData.start_time }} - {{ eventData.end_time }}
+              {{ new Date(eventData.start_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) }} - {{ new Date(eventData.end_date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) }}
             </span>
           </div>
           <div class="flex gap-2 ml-1 my-4">
@@ -41,22 +41,14 @@
             </span>
             <img :src="Chair" alt="Location" class="text-4xl sm:text-3xl ml-auto">
             <span class="font-medium text-[16px] sm:text-[14px] mt-2 mr-2">
-              {{ eventData.slot }} Kursi
+              {{ eventData.max_participants }} Kursi
             </span>
           </div>
 
           <div class="border-b-2 border-[#003266] w-full lg:w-[486px] my-4" />
-          <div class="lecturer flex gap-2 ml-2">
-            <img :src="eventData.speakerPreview" alt="Profile" class="w-[40px] h-[40px] rounded-full object-cover">
-            <div class="lecturername flex flex-col ml-4">
-              <span class="font-semibold text-[14px] lg:text-[16px]">{{ eventData.speaker }}</span>
-              <span class="text-regular text-[12px] lg:text-[14px]">{{ eventData.role }}</span>
-            </div>
-          </div>
-          <div class="border-b-2 border-[#003266] w-full lg:w-[486px] my-4" />
           <div>
             <p class="eventdescription font-regular text-wrap text-[14px] lg:text-[16px] block w-full lg:max-w-[486px]">
-              {{ eventData.desc }}
+              {{ eventData.description }}
             </p>
           </div>
         </div>
@@ -96,15 +88,7 @@ const pageAnimation = ref('page-enter')
 
 useAuthCheck(true)
 
-const categoryMap: Record<number, string> = {
-  1: 'Webinar',
-  2: 'Seminar',
-  3: 'Kuliah Tamu',
-  4: 'Workshop',
-  5: 'Sertifikasi',
-}
 
-const CategoryName = computed(() => categoryMap[eventData.value?.category])
 
 const handleBack = () => {
   pageAnimation.value = 'page-exit'
@@ -120,24 +104,25 @@ const handleUpdate = async () => {
     }
 
     const formData = new FormData()
-    formData.append('category', eventData.value.category)
     formData.append('title', eventData.value.title)
-    formData.append('date', eventData.value.date)
-    formData.append('start_time', eventData.value.start_time)
-    formData.append('end_time', eventData.value.end_time)
-    formData.append('desc', eventData.value.desc)
-    formData.append('speaker', eventData.value.speaker)
-    formData.append('role', eventData.value.role)
-    formData.append('slot', eventData.value.slot)
+    formData.append('start_date', eventData.value.start_date)
+    formData.append('end_date', eventData.value.end_date)
+    formData.append('description', eventData.value.description)
+    formData.append('max_participants', eventData.value.max_participants)
+    formData.append('registration_fee', eventData.value.registration_fee || '0')
+    if (eventData.value.registration_open) {
+      formData.append('registration_open', eventData.value.registration_open)
+    }
+    if (eventData.value.registration_deadline) {
+      formData.append('registration_deadline', eventData.value.registration_deadline)
+    }
     if (eventData.value.isOffline) {
       formData.append('location', eventData.value.location)
+    } else {
+      formData.append('location', 'Online')
     }
-    if (eventData.value.event_img) {
-      formData.append('event_img', eventData.value.event_img)
-    }
-    if (eventData.value.speaker_img) {
-      formData.append('speaker_img', eventData.value.speaker_img)
-    }
+    // We are currently omitting event image upload to match API spec,
+    // unless you want to append it to the separate endpoint. For now we skip it here.
 
     await updateEvent(route.params.id as string, formData, token)
     router.push('/my-events')

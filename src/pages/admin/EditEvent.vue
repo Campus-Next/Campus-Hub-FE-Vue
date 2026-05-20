@@ -4,10 +4,9 @@
 
     <div class="container mx-auto px-4 py-8">
       <div class="max-w-6xl mx-auto my-8">
-        <!-- Header Section -->
         <div class="text-center mb-12">
           <h1 class="text-4xl font-bold text-gray-800 mb-4">
-            {{ step === 1 ? 'Edit Acara' : step === 2 ? 'Edit Detail Pembicara' : 'Preview Perubahan' }}
+            {{ step === 1 ? 'Edit Acara' : step === 2 ? 'Detail Pendaftaran & Lokasi' : 'Preview Perubahan' }}
           </h1>
           <p class="text-lg text-gray-600 max-w-3xl mx-auto">
             Perbarui kelengkapan acara Anda dengan detail yang menarik
@@ -27,8 +26,7 @@
           <div class="p-8 lg:p-12">
             <EventPreview
               v-if="step === 3"
-              :event-data="{ eventsPreview, speakerPreview, category, title, date, start_time, end_time, desc, speaker, role, slot, location, isOffline }"
-              :get-category-name="getCategoryName"
+              :event-data="{ title, description, start_date, end_date, location, max_participants, isOffline }"
             >
               <template #actions>
                 <button :class="buttonSecondaryClasses" @click="handleBack">
@@ -47,29 +45,8 @@
             <EventFormLayout
               v-else
               :step="step"
-              :preview="step === 1 ? eventsPreview : speakerPreview"
-              @drop="handleDrop"
-              @dragover="handleDragOver"
-              @file-change="step === 1 ? getFile : getSpeakerFile"
             >
               <div v-if="step === 1" class="space-y-6">
-                <div class="space-y-2">
-                  <label :class="labelClasses">Kategori *</label>
-                  <select
-                    v-model="category"
-                    :class="`${inputClasses} w-full`"
-                    :style="{ color: category ? 'black' : '#9CA3AF' }"
-                    required
-                  >
-                    <option value="" disabled>Pilih kategori acara</option>
-                    <option value="1">🎥 Webinar</option>
-                    <option value="2">🎤 Seminar</option>
-                    <option value="3">👨🏫 Kuliah Tamu</option>
-                    <option value="4">🛠️ Workshop</option>
-                    <option value="5">🏆 Sertifikasi</option>
-                  </select>
-                </div>
-
                 <div class="space-y-2">
                   <label :class="labelClasses">Judul Acara *</label>
                   <input
@@ -81,34 +58,22 @@
                   >
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-4">
+                <div class="grid md:grid-cols-2 gap-4">
                   <div class="space-y-2">
-                    <label :class="labelClasses">Tanggal *</label>
+                    <label :class="labelClasses">Waktu Mulai *</label>
                     <input
-                      v-model="date"
-                      type="date"
+                      v-model="start_date"
+                      type="datetime-local"
                       :class="`${inputClasses} w-full`"
-                      :style="{ color: date ? 'black' : '#9CA3AF' }"
                       required
                     >
                   </div>
                   <div class="space-y-2">
-                    <label :class="labelClasses">Mulai *</label>
+                    <label :class="labelClasses">Waktu Berakhir *</label>
                     <input
-                      v-model="start_time"
-                      type="time"
+                      v-model="end_date"
+                      type="datetime-local"
                       :class="`${inputClasses} w-full`"
-                      :style="{ color: start_time ? 'black' : '#9CA3AF' }"
-                      required
-                    >
-                  </div>
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Berakhir *</label>
-                    <input
-                      v-model="end_time"
-                      type="time"
-                      :class="`${inputClasses} w-full`"
-                      :style="{ color: end_time ? 'black' : '#9CA3AF' }"
                       required
                     >
                   </div>
@@ -117,7 +82,7 @@
                 <div class="space-y-2">
                   <label :class="labelClasses">Deskripsi *</label>
                   <textarea
-                    v-model="desc"
+                    v-model="description"
                     placeholder="Tulis deskripsi acara yang detail dan menarik..."
                     rows="5"
                     :class="`${inputClasses} w-full resize-none`"
@@ -129,37 +94,46 @@
               <div v-else class="space-y-6">
                 <div class="grid md:grid-cols-2 gap-4">
                   <div class="space-y-2">
-                    <label :class="labelClasses">Nama Pembicara *</label>
+                    <label :class="labelClasses">Jumlah Tiket / Kapasitas *</label>
                     <input
-                      v-model="speaker"
-                      type="text"
+                      v-model="max_participants"
+                      type="number"
+                      placeholder="Masukkan jumlah tiket"
                       :class="`${inputClasses} w-full`"
-                      placeholder="Masukkan nama pembicara"
                       required
                     >
                   </div>
                   <div class="space-y-2">
-                    <label :class="labelClasses">Jabatan/Role *</label>
+                    <label :class="labelClasses">Biaya Pendaftaran (0 = Gratis) *</label>
                     <input
-                      v-model="role"
-                      type="text"
-                      placeholder="Masukkan jabatan pembicara"
+                      v-model="registration_fee"
+                      type="number"
+                      placeholder="Contoh: 50000"
                       :class="`${inputClasses} w-full`"
                       required
                     >
                   </div>
                 </div>
 
-                <div class="space-y-2">
-                  <label :class="labelClasses">Jumlah Tiket *</label>
-                  <input
-                    v-model="slot"
-                    type="text"
-                    placeholder="Masukkan jumlah tiket yang tersedia"
-                    :class="`${inputClasses} w-full`"
-                    required
-                    @input="(e) => { const val = (e.target as HTMLInputElement).value; if (/^\d*$/.test(val)) slot = val }"
-                  >
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <label :class="labelClasses">Pendaftaran Buka *</label>
+                    <input
+                      v-model="registration_open"
+                      type="date"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                  </div>
+                  <div class="space-y-2">
+                    <label :class="labelClasses">Pendaftaran Tutup *</label>
+                    <input
+                      v-model="registration_deadline"
+                      type="date"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                  </div>
                 </div>
 
                 <div class="space-y-4">
@@ -258,26 +232,18 @@ const isLoading = ref(false)
 useAuthCheck(true)
 
 const {
-  eventsPreview,
-  speakerPreview,
-  category,
   title,
-  date,
-  start_time,
-  end_time,
-  desc,
-  speaker,
-  role,
-  slot,
+  description,
+  start_date,
+  end_date,
+  max_participants,
+  registration_fee,
+  registration_open,
+  registration_deadline,
   location,
   isOffline,
   isFormValid,
   isSecondStepValid,
-  getCategoryName,
-  handleDrop,
-  handleDragOver,
-  getFile,
-  getSpeakerFile,
   getFormData,
   setFormData
 } = useEventForm()
@@ -308,7 +274,7 @@ const handleUpdate = async () => {
     const token = localStorage.getItem('token')
     const formData = getFormData()
     
-    await updateEvent(route.params.id as string, formData, token!)
+    await updateEvent(Number(route.params.id), formData, token!)
     router.push('/my-events')
   } catch (error: any) {
     popupMessage.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
@@ -323,24 +289,8 @@ onMounted(async () => {
     setFormData(route.state.data)
   } else {
     try {
-      const data = await fetchEventDetails(route.params.id as string)
-      const storage = import.meta.env.VITE_STORAGE_BASE_URL
-      
-      setFormData({
-        eventsPreview: `${storage}/${data.foto_event}`,
-        speakerPreview: `${storage}/${data.foto_pembicara}`,
-        category: data.kategori_id,
-        title: data.judul,
-        date: data.date,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        desc: data.deskripsi,
-        speaker: data.pembicara,
-        role: data.role,
-        slot: data.available_slot,
-        location: data.tempat,
-        isOffline: data.tempat !== 'Online'
-      })
+      const data = await fetchEventDetails(Number(route.params.id))
+      setFormData(data)
     } catch (error) {
       popupMessage.value = 'Terjadi kesalahan saat memuat data event. Silakan coba lagi.'
       isPopupVisible.value = true
