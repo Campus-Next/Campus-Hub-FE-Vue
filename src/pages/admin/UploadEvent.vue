@@ -193,6 +193,9 @@
                 </div>
               </div>
 
+              <!-- ── Section 2: Detail & Lokasi ───────────────────────── -->
+              <div v-else class="space-y-6">
+
                 <!-- Kapasitas -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Kapasitas Peserta *</label>
