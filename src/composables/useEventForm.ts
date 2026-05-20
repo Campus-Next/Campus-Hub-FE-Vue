@@ -47,6 +47,31 @@ export function useEventForm(initialData?: any) {
     )
   )
 
+  // Inline date constraint errors — shown before user can Publish
+  const dateErrors = computed(() => {
+    const errors: Record<string, string> = {}
+
+    if (registration_open.value && registration_deadline.value) {
+      if (registration_deadline.value < registration_open.value) {
+        errors.registration_deadline = 'Tanggal tutup tidak boleh sebelum tanggal buka pendaftaran.'
+      }
+    }
+
+    // Backend rule: registration_deadline must be <= start_date
+    if (registration_deadline.value && start_date_date.value) {
+      if (registration_deadline.value > start_date_date.value) {
+        errors.registration_deadline =
+          `Pendaftaran harus tutup paling lambat pada hari acara dimulai (${start_date_date.value}).`
+      }
+    }
+
+    return errors
+  })
+
+  // True only when step 2 is filled AND all date constraints pass
+  const isFormComplete = computed(() => isSecondStepValid.value && Object.keys(dateErrors.value).length === 0)
+
+
   // --- FormData builder ---
 
   const getFormData = () => {
@@ -145,6 +170,8 @@ export function useEventForm(initialData?: any) {
     imagePreviewUrl,
     isFormValid,
     isSecondStepValid,
+    isFormComplete,
+    dateErrors,
     getFormData,
     setFormData,
     handleImageSelect,

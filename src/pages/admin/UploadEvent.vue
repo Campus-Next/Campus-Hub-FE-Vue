@@ -193,9 +193,6 @@
                 </div>
               </div>
 
-              <!-- ── Section 2: Detail & Lokasi ───────────────────────── -->
-              <div v-else class="space-y-6">
-
                 <!-- Kapasitas -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Kapasitas Peserta *</label>
@@ -210,8 +207,18 @@
                 </div>
 
                 <!-- Pendaftaran open/close -->
+                <!-- Constraint: deadline ≤ start_date (hari acara dimulai) -->
+                <div class="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700 flex items-start gap-2">
+                  <i class="ri-information-line text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>
+                    <strong>Aturan tanggal pendaftaran:</strong>
+                    Pendaftaran harus <em>ditutup</em> pada hari acara dimulai atau sebelumnya
+                    ({{ start_date_date || '—' }}).
+                  </span>
+                </div>
+
                 <div class="grid md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
+                  <div class="space-y-1">
                     <label :class="labelClasses">Pendaftaran Buka *</label>
                     <input
                       v-model="registration_open"
@@ -220,14 +227,25 @@
                       required
                     >
                   </div>
-                  <div class="space-y-2">
+                  <div class="space-y-1">
                     <label :class="labelClasses">Pendaftaran Tutup *</label>
                     <input
                       v-model="registration_deadline"
                       type="date"
-                      :class="`${inputClasses} w-full`"
+                      :min="registration_open || undefined"
+                      :max="start_date_date || undefined"
+                      :class="[
+                        inputClasses,
+                        'w-full',
+                        dateErrors.registration_deadline ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : ''
+                      ]"
                       required
                     >
+                    <!-- Inline error -->
+                    <p v-if="dateErrors.registration_deadline" class="text-sm text-red-600 flex items-center gap-1 mt-1">
+                      <i class="ri-error-warning-line" />
+                      {{ dateErrors.registration_deadline }}
+                    </p>
                   </div>
                 </div>
 
@@ -340,6 +358,8 @@ const {
   imagePreviewUrl,
   isFormValid,
   isSecondStepValid,
+  isFormComplete,
+  dateErrors,
   getFormData,
   setFormData,
   handleImageSelect,
@@ -351,7 +371,7 @@ const labelClasses          = 'text-lg font-semibold text-gray-700'
 const buttonPrimaryClasses  = 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg'
 const buttonSecondaryClasses = 'border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-lg transition-all duration-200'
 
-const canGoNext = computed(() => step.value === 1 ? isFormValid.value : isSecondStepValid.value)
+const canGoNext = computed(() => step.value === 1 ? isFormValid.value : isFormComplete.value)
 
 const setStep = (newStep: number) => { step.value = newStep }
 const handleNext = () => { if (step.value < 3) step.value++ }
