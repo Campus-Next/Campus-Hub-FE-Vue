@@ -122,18 +122,30 @@
                 <div class="space-y-2">
                   <label :class="labelClasses">Waktu Mulai *</label>
                   <div class="grid grid-cols-2 gap-4">
-                    <input
-                      v-model="start_date_date"
-                      type="date"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                    <input
-                      v-model="start_date_time"
-                      type="time"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
+                    <!-- Date picker -->
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <i class="ri-calendar-line text-lg" />
+                      </span>
+                      <input
+                        v-model="start_date_date"
+                        type="date"
+                        :class="`${inputClasses} w-full pl-10`"
+                        required
+                      >
+                    </div>
+                    <!-- Time picker -->
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <i class="ri-time-line text-lg" />
+                      </span>
+                      <input
+                        v-model="start_date_time"
+                        type="time"
+                        :class="`${inputClasses} w-full pl-10 cursor-pointer`"
+                        required
+                      >
+                    </div>
                   </div>
                 </div>
 
@@ -141,18 +153,30 @@
                 <div class="space-y-2">
                   <label :class="labelClasses">Waktu Berakhir *</label>
                   <div class="grid grid-cols-2 gap-4">
-                    <input
-                      v-model="end_date_date"
-                      type="date"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                    <input
-                      v-model="end_date_time"
-                      type="time"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
+                    <!-- Date picker -->
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <i class="ri-calendar-line text-lg" />
+                      </span>
+                      <input
+                        v-model="end_date_date"
+                        type="date"
+                        :class="`${inputClasses} w-full pl-10`"
+                        required
+                      >
+                    </div>
+                    <!-- Time picker -->
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <i class="ri-time-line text-lg" />
+                      </span>
+                      <input
+                        v-model="end_date_time"
+                        type="time"
+                        :class="`${inputClasses} w-full pl-10 cursor-pointer`"
+                        required
+                      >
+                    </div>
                   </div>
                 </div>
 
