@@ -27,7 +27,7 @@
         <div class="PosterEvent w-3/12 h-1/2">
           <img
             class="w-full h-full object-cover rounded-2xl shadow-lg"
-            src="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event"
+            :src="getEventImageUrl(eventData)"
             alt="Poster Event"
           />
         </div>
@@ -80,9 +80,9 @@
                 <img src="../../assets/image/chair.svg" alt="Capacity" class="w-5 h-5 object-contain" />
               </div>
               <div class="detail-content">
-                <p class="text-sm text-gray-500 font-medium">Kapasitas</p>
+                <p class="text-sm text-gray-500 font-medium">Kapasitas Tersisa</p>
                 <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                  {{ eventData.max_participants }} Kursi
+                  {{ remainingSlots }} / {{ eventData.max_participants }} Kursi
                 </p>
               </div>
             </div>
@@ -114,25 +114,36 @@
           </div>
         </div>
 
-        <div class="booking w-full md:w-3/12 px-6 py-4 mx-auto bg-white shadow-lg rounded-2xl flex flex-col mt-4 md:mt-0 gap-3">
+        <div class="booking w-full md:w-3/12 px-6 py-6 mx-auto bg-white shadow-lg rounded-2xl flex flex-col mt-4 md:mt-0 gap-4">
           <h1 class="text-left font-semibold text-[20px] sm:text-[18px] pl-2 lg:text-left sm:text-center">
-            Pesan Sekarang!
+            Pendaftaran Event
           </h1>
-          <p v-if="feedback" :class="['text-sm', feedbackError ? 'text-red-600' : 'text-green-600']">{{ feedback }}</p>
+          <p v-if="feedback" :class="['text-sm text-center', feedbackError ? 'text-red-600 font-medium' : 'text-green-600 font-medium']">{{ feedback }}</p>
+          
           <button
+            v-if="isEnrolled"
             type="button"
-            class="bg-[#027FFF] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-regular w-full h-11 rounded-lg text-medium text-white text-[16px] sm:text-[14px]"
-            :disabled="isAdding"
-            @click="handleAddToCart"
+            class="bg-green-600 hover:bg-green-700 font-medium w-full h-11 rounded-lg text-white text-[16px] transition-colors"
+            @click="viewTicket"
           >
-            {{ isAdding ? 'Menambahkan...' : 'Tambah ke Keranjang' }}
+            Lihat Tiket (Terdaftar)
           </button>
           <button
+            v-else-if="remainingSlots <= 0"
             type="button"
-            class="bg-white border-2 border-[#027FFF] font-regular w-full h-11 rounded-lg text-medium text-[#027FFF] text-[16px] sm:text-[14px]"
-            @click="handleBuyNow"
+            class="bg-[#A2A2A2] cursor-not-allowed font-medium w-full h-11 rounded-lg text-white text-[16px]"
+            disabled
           >
-            Beli Sekarang
+            Kapasitas Penuh
+          </button>
+          <button
+            v-else
+            type="button"
+            class="bg-[#027FFF] hover:bg-[#0066CC] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-medium w-full h-11 rounded-lg text-white text-[16px] transition-colors"
+            :disabled="isRegistering"
+            @click="handleRegister"
+          >
+            {{ isRegistering ? 'Mendaftar...' : 'Daftar Sekarang' }}
           </button>
         </div>
       </div>
@@ -145,24 +156,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchEvent } from '../../services/api'
-import { useCart } from '../../composables/useCart'
+import { fetchEvent, enrollEvent, fetchUniqueCode } from '../../services/api'
 import { useAuth } from '../../composables/useAuth'
 import Navbar from '../../components/Navbar.vue'
+import { getEventImageUrl } from '../../utils/helpers'
 import type { Event } from '../../types'
 
 const route = useRoute()
 const router = useRouter()
 const { getToken } = useAuth()
-const { add } = useCart()
 
 const eventData = ref<Event | null>(null)
 const error = ref<string | null>(null)
 const isLoaded = ref(false)
 const isExiting = ref(false)
-const isAdding = ref(false)
+const isRegistering = ref(false)
+const isEnrolled = ref(false)
 const feedback = ref('')
 const feedbackError = ref(false)
 
@@ -172,28 +183,56 @@ const ensureAuth = (): boolean => {
   return false
 }
 
-const handleAddToCart = async () => {
-  if (!eventData.value || !ensureAuth()) return
-  isAdding.value = true
-  feedback.value = ''
-  try {
-    await add(eventData.value.id, 1)
-    feedbackError.value = false
-    feedback.value = 'Acara ditambahkan ke keranjang.'
-  } catch (err: any) {
-    feedbackError.value = true
-    feedback.value = err?.data || err?.message || 'Gagal menambahkan ke keranjang.'
-  } finally {
-    isAdding.value = false
+const remainingSlots = computed(() => {
+  if (!eventData.value) return 0
+  const registered = eventData.value.participants_count ?? 0
+  return Math.max(0, eventData.value.max_participants - registered)
+})
+
+const viewTicket = () => {
+  if (eventData.value) {
+    router.push(`/my-events/${eventData.value.id}/kode-unik`)
   }
 }
 
-const handleBuyNow = () => {
+const handleRegister = async () => {
   if (!eventData.value || !ensureAuth()) return
-  isExiting.value = true
-  setTimeout(() => {
-    router.push(`/events/${eventData.value?.id}/preview`)
-  }, 300)
+  isRegistering.value = true
+  feedback.value = ''
+  try {
+    const token = getToken()
+    if (!token) return
+    await enrollEvent(eventData.value.id, token)
+    feedbackError.value = false
+    feedback.value = 'Pendaftaran berhasil!'
+    isEnrolled.value = true
+    if (eventData.value.participants_count !== undefined) {
+      eventData.value.participants_count++
+    } else {
+      eventData.value.participants_count = 1
+    }
+    setTimeout(() => {
+      router.push(`/my-events/${eventData.value?.id}/kode-unik`)
+    }, 1500)
+  } catch (err: any) {
+    feedbackError.value = true
+    feedback.value = err?.data || err?.message || 'Gagal mendaftar ke acara.'
+  } finally {
+    isRegistering.value = false
+  }
+}
+
+const checkEnrollment = async () => {
+  const token = getToken()
+  if (!token || !eventData.value) return
+  try {
+    const res = await fetchUniqueCode(eventData.value.id, token)
+    if (res && res.status !== 'cancelled') {
+      isEnrolled.value = true
+    }
+  } catch (err) {
+    isEnrolled.value = false
+  }
 }
 
 onMounted(async () => {
@@ -201,6 +240,7 @@ onMounted(async () => {
   try {
     const data = await fetchEvent(Number(id))
     eventData.value = data
+    await checkEnrollment()
   } catch (err: any) {
     error.value = err.message
   }

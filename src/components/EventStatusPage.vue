@@ -23,7 +23,7 @@
         <div class="PosterEvent w-full lg:w-3/12">
           <img
             class="w-full object-cover rounded-2xl shadow-lg"
-            src="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event"
+            :src="getEventImageUrl(eventData)"
             alt="Poster Event"
           />
         </div>
@@ -163,6 +163,7 @@ import LoadingSpinner from '../components/LoadingSpinner.vue'
 import ErrorMessage from './ErrorMessage.vue'
 import EventDetailItem from './EventDetailItem.vue'
 import PopUpCancel from '../components/PopUpCancel.vue'
+import { getEventImageUrl } from '../utils/helpers'
 
 interface Props {
   status: 'registered' | 'cancelled' | 'attended' | 'absent'

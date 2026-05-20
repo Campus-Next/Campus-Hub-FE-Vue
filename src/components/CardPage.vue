@@ -4,7 +4,7 @@
       <template v-if="currentEvents.length > 0">
         <div v-for="event in currentEvents" :key="event.id" class="gap-y-[50px]">
           <Card @click="handleCardClick(event.id)">
-            <CardImage image="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event" />
+            <CardImage :image="event.images && event.images.length > 0 ? event.images[0].path : null" />
             <CardBody :title="event.title" :content="event.description" />
             <CardTanggal>{{ new Date(event.start_date).toLocaleDateString('id-ID') }}</CardTanggal>
           </Card>

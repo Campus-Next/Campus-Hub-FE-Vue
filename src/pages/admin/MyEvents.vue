@@ -39,7 +39,7 @@
               @click="router.push(`/my-events/${event.id}/participants`)"
             >
               <div class="event-data flex items-center">
-                <img src="https://via.placeholder.com/150/027FFF/FFFFFF?text=Event" alt="Event" class="w-20 h-20 object-cover rounded-full my-2">
+                <img :src="getEventImageUrl(event)" alt="Event" class="w-20 h-20 object-cover rounded-full my-2">
                 <div class="event-details flex flex-col px-4">
                   <span class="event-title block font-semibold text-lg mb-2">{{ event.title }}</span>
                   <span class="event-date text-sm text-gray-500 mb-1 block">
@@ -82,6 +82,7 @@ import PopUpDeleteEvent from '../../components/PopUpDeleteEvent.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import { fetchMyOrganizedEvents } from '../../services/api'
 import { useEventFilters } from '../../composables/useFilters'
+import { getEventImageUrl } from '../../utils/helpers'
 
 const router = useRouter()
 const events = ref<any[]>([])

@@ -81,7 +81,7 @@
           </div>
 
           <div class="event-list flex flex-col gap-6 px-4 sm:px-6 lg:px-20 py-2">
-            <div v-if="sortedEvents.length > 0">
+            <div v-if="sortedEvents.length > 0" class="flex flex-col gap-6">
               <div
                 v-for="(participant, index) in sortedEvents"
                 :key="`${participant.id}-${statusFilter}-${index}`"
@@ -90,7 +90,7 @@
               >
                 <div class="event-data flex items-center">
                   <img
-                    src="https://via.placeholder.com/150/027FFF/FFFFFF?text=Event"
+                    :src="getEventImageUrl(participant.event)"
                     alt="Event"
                     class="w-20 h-20 object-cover rounded-full my-2"
                   />
@@ -122,6 +122,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { fetchMyEvents } from '../../services/api'
 import Navbar from '../../components/Navbar.vue'
+import { getEventImageUrl } from '../../utils/helpers'
 
 import type { EventParticipant } from '../../types'
 

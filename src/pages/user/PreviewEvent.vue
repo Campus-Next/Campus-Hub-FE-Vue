@@ -26,7 +26,7 @@
             <div class="PosterEvent w-6/12 mr-4">
               <img
                 class="w-full h-full object-cover rounded-2xl shadow-lg"
-                src="https://via.placeholder.com/400x300/027FFF/FFFFFF?text=Event"
+                :src="getEventImageUrl(eventData)"
                 alt="Poster Event"
               />
             </div>
@@ -91,28 +91,24 @@
         </div>
 
         <div class="booking w-3/12 max-w-md h-full px-6 py-6 mx-auto lg:mx-2 bg-white shadow-lg rounded-2xl flex flex-col lg:relative">
-          <div class="sub-total flex gap-4">
-            <span class="text-left my-2 font-medium text-[14px] pl-2 me-auto">Sub Total</span>
-            <span class="text-right my-2 font-medium text-[14px] ms-auto">1 seat(s)</span>
+          <h2 class="font-semibold text-lg mb-4 text-center">Konfirmasi</h2>
+          <div class="sub-total flex gap-4 my-2">
+            <span class="text-left font-medium text-[14px] pl-2 me-auto">Tiket</span>
+            <span class="text-right font-medium text-[14px] ms-auto">1 Kursi</span>
           </div>
-          <span class="event-type my-2 font-medium text-[14px] pl-2">Event</span>
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
-          <div class="total flex gap-4">
-            <span class="text-left my-2 font-semibold text-[18px] pl-2 me-auto">Total</span>
-            <span class="text-right my-2 font-semibold text-[18px] ms-auto">1 seat(s)</span>
-          </div>
           <div class="checkout flex flex-col">
             <button
               class="bg-[#027FFF] font-regular w-full h-11 my-2 rounded-lg text-medium text-white text-[16px]"
               @click="handleBooking"
             >
-              Checkout
+              Daftar
             </button>
             <button
               class="bg-white border-2 border-[#027FFF] font-regular w-full h-11 my-2 rounded-lg text-medium text-[#027FFF] text-[16px]"
               @click="handleExit"
             >
-              Cancel
+              Batal
             </button>
           </div>
         </div>
@@ -134,6 +130,7 @@ import Navbar from '../../components/Navbar.vue'
 import PopUpCheckout from '../../components/PopUpCheckout.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
+import { getEventImageUrl } from '../../utils/helpers'
 
 const route = useRoute()
 const router = useRouter()
