@@ -1,6 +1,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchEvents as apiFetchEvents } from '../services/api'
+import { fetchEvents as apiFetchEvents, fetchCategories as apiFetchCategories } from '../services/api'
 import type { Event } from '../types'
 
 export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, checkAdmin?: boolean }) {
@@ -31,6 +31,7 @@ export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, c
 
     try {
       const data = await apiFetchEvents(targetId)
+      const category = await apiFetchCategories()
       
       if (targetId) {
         // For category-specific requests
@@ -41,10 +42,10 @@ export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, c
         }
       } else {
         // For all events request (homepage)
-        if (data.events && Array.isArray(data.events)) {
-          events.value = data.events
-          trendingCount.value = data.trending || 0
-          categoryCount.value = data.category || 0
+        if (data.data && Array.isArray(data.data)) {
+          events.value = data.data
+          trendingCount.value = data.data.length || 0
+          categoryCount.value = category.data.length || 0
         } else {
           error.value = 'Tidak ada data acara.'
         }

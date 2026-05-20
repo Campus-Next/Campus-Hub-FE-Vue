@@ -125,9 +125,8 @@ const handleLogin = async () => {
         // Fallback: simpan data user mock
         const mockUserData = {
           id: 1,
-          fullname: 'Test User',
+          name: 'Test User',
           email: email.value,
-          phone: '081234567890',
           is_admin: false
         }
         localStorage.setItem('user', JSON.stringify(mockUserData))

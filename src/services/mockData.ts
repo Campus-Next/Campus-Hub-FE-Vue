@@ -1,5 +1,5 @@
 // Mock data untuk testing tanpa API
-export const MOCK_ENABLED = true // Set ke false untuk menggunakan API asli
+export const MOCK_ENABLED = false // Set ke false untuk menggunakan API asli
 
 // Helper untuk membuat mock JWT token
 const createMockJWT = (payload: any) => {
@@ -91,18 +91,14 @@ export const mockCategoryEvents = [
 
 export const mockUser = {
   id: 1,
-  fullname: 'Test User',
+  name: 'Test User',
   email: 'test@example.com',
-  phone: '081234567890',
-  photo: null,
   is_admin: false
 }
 
 export const mockAdminUser = {
   id: 2,
-  fullname: 'Admin User',
+  name: 'Admin User',
   email: 'admin@example.com',
-  phone: '081234567891',
-  photo: null,
   is_admin: true
 }

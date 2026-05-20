@@ -84,8 +84,7 @@ import logo from '../assets/image/logo.svg'
 import logo2 from '../assets/image/logo2.svg'
 
 interface UserData {
-  fullname: string
-  photo: string | null
+  name: string
   is_admin?: boolean
 }
 
@@ -126,10 +125,7 @@ const styles = computed(() => {
 
 const userPhoto = computed(() => {
   if (!userData.value) return ''
-  if (userData.value.photo && userData.value.photo !== 'null') {
-    return `${storage}/${userData.value.photo}`
-  }
-  return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(userData.value.fullname)}&size=48&background=6b7280&color=ffffff`
+  return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(userData.value.name)}&size=48&background=6b7280&color=ffffff`
 })
 
 const aboutus = () => {

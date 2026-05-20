@@ -1,8 +1,10 @@
 export interface User {
-  fullname: string
+  id: number
+  name: string
   email: string
-  nomor_telepon: string
-  photo: string | null
+  email_verified_at?: string
+  created_at?: string
+  updated_at?: string
   is_admin?: boolean
 }
 
@@ -26,7 +28,6 @@ export interface Event {
 export interface EventsResponse {
   events: Event[]
   trending: number
-  category: number
 }
 
 export type EventCategory = 'webinar' | 'seminar' | 'kuliah-tamu' | 'workshop' | 'sertifikasi'
