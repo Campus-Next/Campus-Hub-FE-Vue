@@ -57,15 +57,6 @@ export function useAuth() {
     return true
   }
 
-  const checkAdminAccess = () => {
-    const userData = getUser()
-    if (userData?.is_admin) {
-      router.replace('/')
-      return false
-    }
-    return true
-  }
-
   return {
     user,
     isAuthenticated,
@@ -77,6 +68,5 @@ export function useAuth() {
     logout,
     requireAuth,
     requireGuest,
-    checkAdminAccess
   }
 }

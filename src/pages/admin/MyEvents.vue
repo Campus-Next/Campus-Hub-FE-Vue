@@ -33,7 +33,7 @@
           <div class="event-list flex flex-col gap-6 px-4 sm:px-6 lg:px-20 py-2">
             <div
               v-for="(event, index) in sortedEvents"
-              :key="`${event.id}-${statusFilter}-${index}`"
+              :key="`${event.id}-${index}`"
               class="event-box p-4 border border-customBlue rounded-2xl shadow-md hover:shadow-lg transition duration-300 px-4 py-2 flex justify-between items-center animate-slideIn opacity-0"
               :style="{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }"
               @click="router.push(`/my-events/${event.id}/participants`)"
@@ -75,38 +75,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import PopUpDeleteEvent from '../../components/PopUpDeleteEvent.vue'
 import SearchSort from '../../components/SearchSort.vue'
-import FilterTabs from '../../components/FilterTabs.vue'
-import { fetchMyEvents } from '../../services/api'
-import { useEventFilters, useCategoryFilter } from '../../composables/useFilters'
+import { fetchMyOrganizedEvents } from '../../services/api'
+import { useEventFilters } from '../../composables/useFilters'
 
 const router = useRouter()
-const route = useRoute()
 const events = ref<any[]>([])
 const selectedEventId = ref<string | null>(null)
 const error = ref<string | null>(null)
 const isLoading = ref(true)
 const showConfirm = ref(false)
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 
-const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange } = useEventFilters(events, 'title', 'updated_at')
-
-const sortedEvents = computed(() => {
-  const filtered = events.value.filter(event => 
-    event.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-  const sorted = [...filtered]
-  if (sortOption.value === 'date') {
-    return sorted.sort((a, b) => new Date(a.updated_at || '').getTime() - new Date(b.updated_at || '').getTime())
-  } else if (sortOption.value === 'title') {
-    return sorted.sort((a, b) => a.title.localeCompare(b.title))
-  }
-  return sorted
-})
+const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange, sortedEvents } = useEventFilters(events, 'title', 'updated_at')
 
 const handleDelete = (e: Event, id: string) => {
   e.stopPropagation()
@@ -127,17 +111,9 @@ const onFailure = () => {
   showConfirm.value = false
 }
 
-const statusFilter = ref('All')
-
-watch(() => route.state?.activeTab, (activeTab) => {
-  if (activeTab) {
-    statusFilter.value = activeTab as string
-  }
-})
-
 onMounted(async () => {
   window.scrollTo(0, 0)
-  
+
   const token = localStorage.getItem('token')
   if (!token) {
     router.replace('/welcome?redirect=/my-events')
@@ -145,7 +121,7 @@ onMounted(async () => {
   }
 
   try {
-    const data = await fetchMyEvents(token)
+    const data = await fetchMyOrganizedEvents(token)
     events.value = data
   } catch (err: any) {
     error.value = err.data || 'Koneksi Timeout. Silahkan Coba Lagi'

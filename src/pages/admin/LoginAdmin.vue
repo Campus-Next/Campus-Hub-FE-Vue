@@ -78,7 +78,7 @@ import AuthLayout from '../../components/AuthLayout.vue'
 import Input from '../../components/Input.vue'
 import PopUpNotification from '../../components/PopUpNotification.vue'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
-import { loginAdmin, fetchUserProfile } from '../../services/api'
+import { login, fetchUserProfile } from '../../services/api'
 import { useLoginForm } from '../../composables/useAuthForm'
 
 const router = useRouter()
@@ -98,13 +98,20 @@ const handleLogin = async () => {
   if (isFormValid.value) {
     try {
       isLoading.value = true
-      const data = await loginAdmin({ 
-        email: email.value, 
-        password: password.value, 
-        remember: remember.value 
+      const data = await login({
+        email: email.value,
+        password: password.value,
+        remember: remember.value,
       })
-      
-      message.value = data.message
+
+      if (!data.roles?.includes('admin')) {
+        message.value = 'Akun ini bukan akun admin.'
+        showGagal.value = true
+        isLoading.value = false
+        return
+      }
+
+      message.value = 'Login berhasil'
 
       if (data.access_token) {
         localStorage.setItem('token', data.access_token)
@@ -113,7 +120,7 @@ const handleLogin = async () => {
 
       try {
         const userData = await fetchUserProfile(data.access_token)
-        localStorage.setItem('user', JSON.stringify(userData))
+        localStorage.setItem('user', JSON.stringify({ ...userData, is_admin: true }))
       } finally {
         setTimeout(() => {
           window.location.href = redirectPath

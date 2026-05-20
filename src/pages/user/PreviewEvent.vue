@@ -125,13 +125,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
 import { useEventDetail } from '../../composables/useEventDetail'
 import { registerEventWithToken } from '../../services/api'
-import { getCategoryRoute } from '../../utils/helpers'
-import { STORAGE_BASE_URL } from '../../constants'
 import Navbar from '../../components/Navbar.vue'
 import PopUpCheckout from '../../components/PopUpCheckout.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
@@ -142,7 +140,6 @@ const router = useRouter()
 const { getToken } = useAuth()
 const { eventData, error, loadEvent } = useEventDetail()
 
-const storage = STORAGE_BASE_URL
 const showPopup = ref(false)
 const gagalPopup = ref(false)
 const isExiting = ref(false)
@@ -158,15 +155,15 @@ const handleBooking = async () => {
     }
 
     const eventId = route.params.id as string
-    const data = await registerEventWithToken(Number(eventId), token)
-    message.value = data.message
+    await registerEventWithToken(Number(eventId), token)
+    message.value = 'Pendaftaran berhasil'
     showPopup.value = true
 
     setTimeout(() => {
       router.push(`/my-events/${eventData.value?.id}/kode-unik`)
     }, 2000)
-  } catch (error: any) {
-    message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
+  } catch (err: any) {
+    message.value = err.data || 'Koneksi Timeout, Silahkan Coba Lagi'
     gagalPopup.value = true
   }
 }

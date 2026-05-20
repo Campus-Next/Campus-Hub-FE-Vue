@@ -70,6 +70,7 @@ import { updatePassword } from '../services/api'
 
 interface Props {
   setShowPopUp: (value: boolean) => void
+  currentPassword: string
   password: string
   confirmation: string
 }
@@ -96,11 +97,18 @@ const triggerClose = () => {
 const handleUpdate = async () => {
   isProcessing.value = true
   try {
-    const data = await updatePassword(props.password, props.confirmation, localStorage.getItem('token') || '')
+    const data = await updatePassword(
+      {
+        current_password: props.currentPassword,
+        password: props.password,
+        password_confirmation: props.confirmation,
+      },
+      localStorage.getItem('token') || '',
+    )
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     localStorage.removeItem('token_type')
-    message.value = data.message
+    message.value = data.message || 'Password berhasil diubah'
     status.value = 'success'
   } catch (error: any) {
     message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'

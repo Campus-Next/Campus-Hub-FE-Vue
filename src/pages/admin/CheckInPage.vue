@@ -91,12 +91,12 @@ const handleNavigation = () => {
 const handleCheckIn = async () => {
   try {
     isLoading.value = true
-    const data = await checkInParticipant(route.params.id as string, getCodeString(), localStorage.getItem('token')!)
-    datas.value = data.message
-    user.value = data.name
+    const participant = await checkInParticipant(route.params.id as string, getCodeString(), localStorage.getItem('token')!)
+    datas.value = 'Check-in berhasil'
+    user.value = (participant.user as any)?.name || null
     showPopup.value = true
   } catch (error: any) {
-    datas.value = error.data || 'Koneksi bermasalah, silahkan coba lagi'
+    datas.value = error.data || 'Kode tidak valid, silahkan coba lagi'
     showGagal.value = true
   } finally {
     resetCode()

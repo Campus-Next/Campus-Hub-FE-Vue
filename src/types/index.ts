@@ -8,9 +8,33 @@ export interface User {
   is_admin?: boolean
 }
 
+export interface Category {
+  id: number
+  name: string
+  slug: string
+}
+
+export interface EventLink {
+  id: number
+  event_id: number
+  title: string
+  url: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface EventImage {
+  id: number
+  event_id: number
+  path: string
+  alt_text?: string | null
+  is_primary?: boolean
+}
+
 export interface Event {
   id: number
   organizer_id: number
+  category_id?: number | null
   title: string
   description: string
   start_date: string
@@ -23,18 +47,36 @@ export interface Event {
   created_at?: string
   updated_at?: string
   status?: string
+  category?: Category | null
+  organizer?: User | null
+  event_links?: EventLink[]
+  images?: EventImage[]
 }
 
-export interface EventsResponse {
-  events: Event[]
-  trending: number
+export interface EventParticipant {
+  id: number
+  event_id: number
+  user_id: number
+  status: 'registered' | 'cancelled' | 'attended' | 'absent'
+  unique_code?: string | null
+  event?: Event
+  user?: User
+  created_at?: string
+  updated_at?: string
 }
 
-export type EventCategory = 'webinar' | 'seminar' | 'kuliah-tamu' | 'workshop' | 'sertifikasi'
+export interface Cart {
+  id: number
+  user_id: number
+  event_id: number
+  quantity: number
+  event?: Event
+  created_at?: string
+  updated_at?: string
+}
 
-export interface CategoryConfig {
-  id: string
-  name: string
-  title: string
-  route: string
+export interface ApiEnvelope<T> {
+  success: boolean
+  message: string
+  data: T
 }
