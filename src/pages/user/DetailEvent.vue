@@ -95,17 +95,44 @@
               {{ eventData.description }}
             </p>
           </div>
+
+          <div v-if="eventData.event_links && eventData.event_links.length > 0" class="mt-6">
+            <h2 class="font-semibold text-[18px] text-[#003266] mb-3">Link Acara</h2>
+            <ul class="flex flex-col gap-2">
+              <li v-for="link in eventData.event_links" :key="link.id">
+                <a
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 text-[#027FFF] hover:underline"
+                >
+                  <i class="ri-external-link-line"></i>
+                  <span>{{ link.title }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div class="booking w-full md:w-3/12 h-36 px-6 mx-auto bg-white shadow-lg rounded-2xl flex flex-col mt-4 md:mt-0">
-          <h1 class="text-left my-4 font-semibold text-[20px] sm:text-[18px] pl-2 lg:text-left sm:text-center">
+        <div class="booking w-full md:w-3/12 px-6 py-4 mx-auto bg-white shadow-lg rounded-2xl flex flex-col mt-4 md:mt-0 gap-3">
+          <h1 class="text-left font-semibold text-[20px] sm:text-[18px] pl-2 lg:text-left sm:text-center">
             Pesan Sekarang!
           </h1>
+          <p v-if="feedback" :class="['text-sm', feedbackError ? 'text-red-600' : 'text-green-600']">{{ feedback }}</p>
           <button
-            class="bg-[#027FFF] font-regular w-full h-11 my-4 rounded-lg text-medium text-white text-[16px] sm:text-[14px]"
-            @click="handleExit"
+            type="button"
+            class="bg-[#027FFF] disabled:bg-[#A2A2A2] disabled:cursor-not-allowed font-regular w-full h-11 rounded-lg text-medium text-white text-[16px] sm:text-[14px]"
+            :disabled="isAdding"
+            @click="handleAddToCart"
           >
-            Pesan
+            {{ isAdding ? 'Menambahkan...' : 'Tambah ke Keranjang' }}
+          </button>
+          <button
+            type="button"
+            class="bg-white border-2 border-[#027FFF] font-regular w-full h-11 rounded-lg text-medium text-[#027FFF] text-[16px] sm:text-[14px]"
+            @click="handleBuyNow"
+          >
+            Beli Sekarang
           </button>
         </div>
       </div>
@@ -121,23 +148,52 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchEvent } from '../../services/api'
+import { useCart } from '../../composables/useCart'
+import { useAuth } from '../../composables/useAuth'
 import Navbar from '../../components/Navbar.vue'
 import type { Event } from '../../types'
 
 const route = useRoute()
 const router = useRouter()
+const { getToken } = useAuth()
+const { add } = useCart()
 
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 const eventData = ref<Event | null>(null)
 const error = ref<string | null>(null)
 const isLoaded = ref(false)
 const isExiting = ref(false)
+const isAdding = ref(false)
+const feedback = ref('')
+const feedbackError = ref(false)
 
-const handleExit = () => {
+const ensureAuth = (): boolean => {
+  if (getToken()) return true
+  router.push(`/user/login?redirect=${encodeURIComponent(route.fullPath)}`)
+  return false
+}
+
+const handleAddToCart = async () => {
+  if (!eventData.value || !ensureAuth()) return
+  isAdding.value = true
+  feedback.value = ''
+  try {
+    await add(eventData.value.id, 1)
+    feedbackError.value = false
+    feedback.value = 'Acara ditambahkan ke keranjang.'
+  } catch (err: any) {
+    feedbackError.value = true
+    feedback.value = err?.data || err?.message || 'Gagal menambahkan ke keranjang.'
+  } finally {
+    isAdding.value = false
+  }
+}
+
+const handleBuyNow = () => {
+  if (!eventData.value || !ensureAuth()) return
   isExiting.value = true
   setTimeout(() => {
     router.push(`/events/${eventData.value?.id}/preview`)
-  }, 500)
+  }, 300)
 }
 
 onMounted(async () => {

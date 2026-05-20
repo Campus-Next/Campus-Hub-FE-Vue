@@ -48,6 +48,43 @@
               {{ eventData.description }}
             </p>
           </div>
+
+          <div v-if="eventData.event_links && eventData.event_links.length > 0" class="event-links mt-6">
+            <h3 class="font-semibold text-[18px] mb-3">Tautan Acara</h3>
+            <ul class="flex flex-col gap-2">
+              <li v-for="link in eventData.event_links" :key="link.id">
+                <a
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center gap-3 p-3 rounded-lg border border-[#027FFF] bg-blue-50 hover:bg-blue-100 transition-colors"
+                >
+                  <i class="ri-external-link-line text-[#027FFF] text-xl" />
+                  <span class="font-medium text-[#003266] text-[14px]">{{ link.title }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="status === 'registered' && code.length === 4" class="mt-6">
+            <h3 class="font-semibold text-[18px] mb-3">Kode Tiket</h3>
+            <div class="unique-code bg-[#027FFF] w-fit flex flex-col items-center px-6 py-4 rounded-xl">
+              <div class="flex gap-2 justify-center">
+                <input
+                  v-for="(char, index) in code"
+                  :key="index"
+                  type="text"
+                  maxlength="1"
+                  :value="char"
+                  readonly
+                  class="w-10 h-12 text-center text-[24px] font-bold border border-gray-400 rounded-lg bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+              Tunjukkan kode ini kepada panitia saat check-in.
+            </p>
+          </div>
         </div>
 
         <!-- Status Card -->
@@ -121,7 +158,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useEventDetail } from '../composables/useEventDetail'
 import { fetchUniqueCode } from '../services/api'
-import { STORAGE_BASE_URL, EVENT_STATUS } from '../constants'
 import Navbar from '../components/Navbar.vue'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 import ErrorMessage from './ErrorMessage.vue'
@@ -139,7 +175,6 @@ const router = useRouter()
 const { getToken, requireAuth } = useAuth()
 const { eventData, loadEvent } = useEventDetail()
 
-const storage = STORAGE_BASE_URL
 const loading = ref(true)
 const error = ref<string | null>(null)
 const code = ref<string[]>([])
@@ -230,9 +265,9 @@ onMounted(async () => {
     await loadEvent(eventId)
 
     if (props.status === 'registered' && token) {
-      const codeData = await fetchUniqueCode(Number(eventId), token)
-      if (codeData.kode_unik) {
-        code.value = codeData.kode_unik.split('')
+      const codeData = await fetchUniqueCode(eventId, token)
+      if (codeData.unique_code) {
+        code.value = codeData.unique_code.split('')
       }
     }
   } catch (err: any) {

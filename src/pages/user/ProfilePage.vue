@@ -57,8 +57,6 @@
                       </div>
                     </div>
                   </div>
-
-                  </div>
                 </div>
 
                 <div class="save-button flex flex-col lg:flex-row gap-4 items-center justify-center py-6 w-full">
@@ -184,28 +182,17 @@ const userPhoto = computed(() => {
 
 const handleUpdate = async () => {
   isProcessing.value = true
-  const formData = new FormData()
-  formData.append('name', user.value.name)
-  formData.append('email', user.value.email)
-
   try {
-    await updateUserProfile(formData, token || '')
-
-    try {
-      const data = await fetchUserProfile(token || '')
-      localStorage.removeItem('user')
-      localStorage.setItem('user', JSON.stringify(data))
-      datas.value = 'Profil berhasil diubah'
-      showBerhasil.value = true
-      setTimeout(() => {
-        window.location.reload()
-      }, 2800)
-    } catch (error: any) {
-      datas.value = error.data || 'Koneksi bermasalah, silahkan coba lagi'
-      showGagal.value = true
-    } finally {
-      isProcessing.value = false
-    }
+    const updated = await updateUserProfile(
+      { name: user.value.name, email: user.value.email },
+      token || '',
+    )
+    localStorage.setItem('user', JSON.stringify(updated))
+    datas.value = 'Profil berhasil diubah'
+    showBerhasil.value = true
+    setTimeout(() => {
+      window.location.reload()
+    }, 2000)
   } catch (error: any) {
     datas.value = error.data || 'Koneksi bermasalah, silahkan coba lagi'
     showGagal.value = true

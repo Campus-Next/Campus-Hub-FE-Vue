@@ -50,34 +50,25 @@
       </main>
     </header>
 
-    <div class="flex flex-col gap-y-[24px] my-[24px]" id="kategori">
+    <div v-if="categories.length > 0" class="flex flex-col gap-y-[24px] my-[24px]" id="kategori">
       <h1 v-animate class="flex justify-center items-center font-semibold text-[32px]">Kategori</h1>
       <div v-animate>
-        <ul class="flex gap-x-[64px] justify-center">
-          <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
-            <router-link to="/webinar">
-              <img src="../../assets/image/webinar.svg" alt="Webinar" />
-            </router-link>
-          </li>
-          <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
-            <router-link to="/seminar">
-              <img src="../../assets/image/seminar.svg" alt="Seminar" />
-            </router-link>
-          </li>
-          <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
-            <router-link to="/kuliah-tamu">
-              <img src="../../assets/image/kuliah.svg" alt="Kuliah" />
-            </router-link>
-          </li>
-          <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
-            <router-link to="/workshop">
-              <img src="../../assets/image/workshop.svg" alt="Workshop" />
-            </router-link>
-          </li>
-          <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
-            <router-link to="/sertifikasi">
-              <img src="../../assets/image/sertifikasi.svg" alt="Sertifikasi" />
-            </router-link>
+        <ul class="flex gap-x-[64px] justify-center flex-wrap">
+          <li
+            v-for="category in categories"
+            :key="category.id"
+            class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150"
+          >
+            <button
+              type="button"
+              class="flex flex-col items-center gap-2 text-[#003266] font-medium"
+              @click="scrollToAcara"
+            >
+              <div class="w-20 h-20 rounded-full bg-[#EAF4FF] flex items-center justify-center">
+                <i class="ri-calendar-event-line text-3xl text-[#027FFF]" />
+              </div>
+              <span class="text-sm">{{ category.name }}</span>
+            </button>
           </li>
         </ul>
       </div>
@@ -119,9 +110,13 @@ import CardPage from '../../components/CardPage.vue'
 import Footer from '../../components/Footer.vue'
 import Navbar from '../../components/Navbar.vue'
 import { useCountUp } from '../../composables/useCountUp'
+import { computed } from 'vue'
 import { useEvents } from '../../composables/useEvents'
 
-const { events, isLoading, error, trendingCount, categoryCount } = useEvents(undefined, { autoLoad: true })
+const { events, categories, isLoading, error } = useEvents(undefined, { autoLoad: true })
+
+const trendingCount = computed(() => events.value.length)
+const categoryCount = computed(() => categories.value.length)
 
 const animatedTrendingCount = useCountUp(trendingCount, 2000)
 const animatedCategoryCount = useCountUp(categoryCount, 2000)

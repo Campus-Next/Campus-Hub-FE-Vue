@@ -1,28 +1,33 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchEvents as apiFetchEvents, fetchCategories as apiFetchCategories } from '../services/api'
-import type { Event } from '../types'
+import {
+  fetchEvents as apiFetchEvents,
+  fetchCategories as apiFetchCategories,
+} from '../services/api'
+import type { Category, Event } from '../types'
 
-export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, checkAdmin?: boolean }) {
+export function useEvents(
+  categoryId?: string | number,
+  options?: { autoLoad?: boolean; checkAdmin?: boolean },
+) {
   const router = useRouter()
   const events = ref<Event[]>([])
+  const categories = ref<Category[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-  const trendingCount = ref(0)
-  const categoryCount = ref(0)
 
-  const loadEvents = async (id?: string) => {
-    const targetId = id || categoryId
-    
-    // Check if user is admin and redirect if needed
+  const loadEvents = async (id?: string | number) => {
+    const targetId = id ?? categoryId
+
     if (options?.checkAdmin) {
-      const userStr = localStorage.getItem('user')
-      if (userStr) {
-        const user = JSON.parse(userStr)
-        if (user.is_admin) {
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || 'null')
+        if (user?.is_admin) {
           router.replace('/')
           return
         }
+      } catch {
+        // ignore
       }
     }
 
@@ -30,28 +35,20 @@ export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, c
     error.value = null
 
     try {
-      const data = await apiFetchEvents(targetId)
-      const category = await apiFetchCategories()
-      
-      if (targetId) {
-        // For category-specific requests
-        if (Array.isArray(data) && data.length > 0) {
-          events.value = data
-        } else {
-          error.value = 'Tidak ada data acara.'
-        }
-      } else {
-        // For all events request (homepage)
-        if (data.data && Array.isArray(data.data)) {
-          events.value = data.data
-          trendingCount.value = data.data.length || 0
-          categoryCount.value = category.data.length || 0
-        } else {
-          error.value = 'Tidak ada data acara.'
-        }
+      const query = targetId ? { category_id: Number(targetId) } : {}
+      const [eventList, categoryList] = await Promise.all([
+        apiFetchEvents(query),
+        apiFetchCategories(),
+      ])
+
+      events.value = Array.isArray(eventList) ? eventList : []
+      categories.value = Array.isArray(categoryList) ? categoryList : []
+
+      if (events.value.length === 0) {
+        error.value = 'Tidak ada data acara.'
       }
     } catch (err: any) {
-      error.value = err.message || 'Terjadi kesalahan saat memuat data'
+      error.value = err?.data || err?.message || 'Terjadi kesalahan saat memuat data'
     } finally {
       isLoading.value = false
     }
@@ -62,7 +59,6 @@ export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, c
     error.value = null
   }
 
-  // Auto load on mount if enabled
   if (options?.autoLoad !== false) {
     onMounted(() => {
       window.scrollTo(0, 0)
@@ -72,11 +68,10 @@ export function useEvents(categoryId?: string, options?: { autoLoad?: boolean, c
 
   return {
     events,
+    categories,
     isLoading,
     error,
-    trendingCount,
-    categoryCount,
     loadEvents,
-    clearEvents
+    clearEvents,
   }
 }
