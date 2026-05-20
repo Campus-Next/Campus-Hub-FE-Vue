@@ -11,7 +11,7 @@
           <p class="text-lg text-gray-600 max-w-3xl mx-auto">
             Perbarui kelengkapan acara Anda dengan detail yang menarik
           </p>
-          
+
           <StepIndicator
             :current-step="step"
             :steps="[1, 2, 3]"
@@ -24,9 +24,22 @@
       <div class="max-w-7xl mx-auto">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div class="p-8 lg:p-12">
+
+            <!-- ── Section 3: Preview ─────────────────────────────────── -->
             <EventPreview
               v-if="step === 3"
-              :event-data="{ title, description, start_date, end_date, location, max_participants, isOffline }"
+              :event-data="{
+                title,
+                description,
+                start_date_date,
+                start_date_time,
+                end_date_date,
+                end_date_time,
+                location,
+                max_participants,
+                isOffline,
+                imagePreviewUrl,
+              }"
             >
               <template #actions>
                 <button :class="buttonSecondaryClasses" @click="handleBack">
@@ -42,11 +55,58 @@
               </template>
             </EventPreview>
 
-            <EventFormLayout
-              v-else
-              :step="step"
-            >
+            <EventFormLayout v-else :step="step">
+
+              <!-- ── Section 1: Info Acara ─────────────────────────────── -->
               <div v-if="step === 1" class="space-y-6">
+
+                <!-- Image Upload -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Poster / Gambar Acara</label>
+                  <div
+                    class="relative border-2 border-dashed rounded-xl transition-all duration-200 overflow-hidden"
+                    :class="imagePreviewUrl
+                      ? 'border-blue-400 bg-blue-50'
+                      : 'border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'"
+                    @dragover.prevent
+                    @drop.prevent="onDrop"
+                  >
+                    <!-- Preview -->
+                    <div v-if="imagePreviewUrl" class="relative group">
+                      <img
+                        :src="imagePreviewUrl"
+                        alt="Preview Poster"
+                        class="w-full max-h-64 object-cover rounded-xl"
+                      >
+                      <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                        <button
+                          type="button"
+                          class="bg-white text-red-500 font-semibold px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                          @click="clearImage"
+                        >
+                          <i class="ri-delete-bin-line mr-2" />Ganti Gambar
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Drop zone -->
+                    <label v-else class="flex flex-col items-center justify-center py-12 cursor-pointer">
+                      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="ri-image-add-line text-3xl text-blue-500" />
+                      </div>
+                      <p class="text-gray-700 font-semibold mb-1">Klik untuk upload atau drag & drop</p>
+                      <p class="text-gray-400 text-sm">JPEG, PNG, WebP — Maks. 5 MB</p>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        class="hidden"
+                        @change="onFileChange"
+                      >
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Title -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Judul Acara *</label>
                   <input
@@ -58,27 +118,45 @@
                   >
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Waktu Mulai *</label>
+                <!-- Start Date & Time -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Waktu Mulai *</label>
+                  <div class="grid grid-cols-2 gap-4">
                     <input
-                      v-model="start_date"
-                      type="datetime-local"
+                      v-model="start_date_date"
+                      type="date"
                       :class="`${inputClasses} w-full`"
                       required
                     >
-                  </div>
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Waktu Berakhir *</label>
                     <input
-                      v-model="end_date"
-                      type="datetime-local"
+                      v-model="start_date_time"
+                      type="time"
                       :class="`${inputClasses} w-full`"
                       required
                     >
                   </div>
                 </div>
 
+                <!-- End Date & Time -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Waktu Berakhir *</label>
+                  <div class="grid grid-cols-2 gap-4">
+                    <input
+                      v-model="end_date_date"
+                      type="date"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                    <input
+                      v-model="end_date_time"
+                      type="time"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                  </div>
+                </div>
+
+                <!-- Description -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Deskripsi *</label>
                   <textarea
@@ -91,30 +169,23 @@
                 </div>
               </div>
 
+              <!-- ── Section 2: Detail & Lokasi ───────────────────────── -->
               <div v-else class="space-y-6">
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Jumlah Tiket / Kapasitas *</label>
-                    <input
-                      v-model="max_participants"
-                      type="number"
-                      placeholder="Masukkan jumlah tiket"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                  </div>
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Biaya Pendaftaran (0 = Gratis) *</label>
-                    <input
-                      v-model="registration_fee"
-                      type="number"
-                      placeholder="Contoh: 50000"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                  </div>
+
+                <!-- Kapasitas -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Kapasitas Peserta *</label>
+                  <input
+                    v-model="max_participants"
+                    type="number"
+                    min="1"
+                    placeholder="Masukkan jumlah maksimum peserta"
+                    :class="`${inputClasses} w-full`"
+                    required
+                  >
                 </div>
 
+                <!-- Pendaftaran open/close -->
                 <div class="grid md:grid-cols-2 gap-4">
                   <div class="space-y-2">
                     <label :class="labelClasses">Pendaftaran Buka *</label>
@@ -136,6 +207,7 @@
                   </div>
                 </div>
 
+                <!-- Tipe Acara -->
                 <div class="space-y-4">
                   <label :class="labelClasses">Tipe Acara *</label>
                   <div class="flex gap-8">
@@ -147,9 +219,7 @@
                         :value="false"
                         class="w-5 h-5 text-blue-600 border-2 border-gray-300 focus:ring-blue-500"
                       >
-                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">
-                        🌐 Online
-                      </span>
+                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">🌐 Online</span>
                     </label>
                     <label class="flex items-center space-x-3 cursor-pointer group">
                       <input
@@ -159,13 +229,12 @@
                         :value="true"
                         class="w-5 h-5 text-blue-600 border-2 border-gray-300 focus:ring-blue-500"
                       >
-                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">
-                        📍 Offline
-                      </span>
+                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">📍 Offline</span>
                     </label>
                   </div>
                 </div>
 
+                <!-- Lokasi (only for offline) -->
                 <div v-if="isOffline" class="space-y-2">
                   <label :class="labelClasses">Lokasi *</label>
                   <input
@@ -178,6 +247,7 @@
                 </div>
               </div>
 
+              <!-- Navigation Buttons -->
               <div class="flex justify-end space-x-4 pt-8 border-t border-gray-200">
                 <button
                   type="button"
@@ -188,8 +258,8 @@
                 </button>
                 <button
                   type="button"
-                  :class="(step === 1 && isFormValid) || (step === 2 && isSecondStepValid) ? buttonPrimaryClasses : 'bg-gray-400 text-white py-3 px-8 rounded-lg cursor-not-allowed'"
-                  :disabled="(step === 1 && !isFormValid) || (step === 2 && !isSecondStepValid)"
+                  :class="canGoNext ? buttonPrimaryClasses : 'bg-gray-400 text-white py-3 px-8 rounded-lg cursor-not-allowed'"
+                  :disabled="!canGoNext"
                   @click="handleNext"
                 >
                   {{ step === 1 ? 'Lanjut' : 'Preview' }}
@@ -200,7 +270,7 @@
         </div>
       </div>
     </div>
-    
+
     <PopUpGagal
       v-if="isPopupVisible"
       :is-visible="isPopupVisible"
@@ -211,7 +281,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
@@ -223,61 +293,65 @@ import { useEventForm } from '../../composables/useEventForm'
 import { useAuthCheck } from '../../composables/useAuthCheck'
 
 const router = useRouter()
-const route = useRoute()
-const step = ref(route.state?.step || 1)
+const route  = useRoute()
+const step   = ref((route.state as any)?.step || 1)
 const isPopupVisible = ref(false)
-const popupMessage = ref('')
-const isLoading = ref(false)
+const popupMessage   = ref('')
+const isLoading      = ref(false)
 
 useAuthCheck(true)
 
 const {
   title,
   description,
-  start_date,
-  end_date,
+  start_date_date,
+  start_date_time,
+  end_date_date,
+  end_date_time,
   max_participants,
-  registration_fee,
   registration_open,
   registration_deadline,
   location,
   isOffline,
+  imagePreviewUrl,
   isFormValid,
   isSecondStepValid,
   getFormData,
-  setFormData
+  setFormData,
+  handleImageSelect,
+  clearImage,
 } = useEventForm()
 
-const inputClasses = 'border-2 border-gray-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg px-4 py-3 transition-all duration-200 outline-none'
-const labelClasses = 'text-lg font-semibold text-gray-700 min-w-[120px]'
-const buttonPrimaryClasses = 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg'
+const inputClasses          = 'border-2 border-gray-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg px-4 py-3 transition-all duration-200 outline-none'
+const labelClasses          = 'text-lg font-semibold text-gray-700'
+const buttonPrimaryClasses  = 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg'
 const buttonSecondaryClasses = 'border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-lg transition-all duration-200'
 
-const setStep = (newStep: number) => {
-  step.value = newStep
-}
+const canGoNext = computed(() => step.value === 1 ? isFormValid.value : isSecondStepValid.value)
 
-const handleNext = () => {
-  if (step.value === 1) step.value = 2
-  else if (step.value === 2) step.value = 3
-}
+const setStep = (newStep: number) => { step.value = newStep }
+const handleNext = () => { if (step.value < 3) step.value++ }
+const handleBack = () => { if (step.value > 1) step.value-- }
 
-const handleBack = () => {
-  if (step.value === 2) step.value = 1
-  else if (step.value === 3) step.value = 2
+// File handlers
+const onFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) handleImageSelect(file)
+}
+const onDrop = (e: DragEvent) => {
+  const file = e.dataTransfer?.files?.[0]
+  if (file && file.type.startsWith('image/')) handleImageSelect(file)
 }
 
 const handleUpdate = async () => {
   isLoading.value = true
-  
   try {
-    const token = localStorage.getItem('token')
+    const token    = localStorage.getItem('token')
     const formData = getFormData()
-    
     await updateEvent(Number(route.params.id), formData, token!)
     router.push('/my-events')
   } catch (error: any) {
-    popupMessage.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
+    popupMessage.value  = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
     isPopupVisible.value = true
   } finally {
     isLoading.value = false
@@ -285,14 +359,15 @@ const handleUpdate = async () => {
 }
 
 onMounted(async () => {
-  if (route.state?.data) {
-    setFormData(route.state.data)
+  window.scrollTo(0, 0)
+  if ((route.state as any)?.data) {
+    setFormData((route.state as any).data)
   } else {
     try {
       const data = await fetchEventDetails(Number(route.params.id))
       setFormData(data)
     } catch (error) {
-      popupMessage.value = 'Terjadi kesalahan saat memuat data event. Silakan coba lagi.'
+      popupMessage.value  = 'Terjadi kesalahan saat memuat data event. Silakan coba lagi.'
       isPopupVisible.value = true
       console.error('Error fetching event details:', error)
     }
