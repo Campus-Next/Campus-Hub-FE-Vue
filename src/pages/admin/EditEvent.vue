@@ -58,6 +58,23 @@
                   >
                 </div>
 
+                <div class="space-y-2">
+                  <label :class="labelClasses">Kategori</label>
+                  <select
+                    v-model="category_id"
+                    :class="`${inputClasses} w-full bg-white`"
+                  >
+                    <option value="">Pilih kategori</option>
+                    <option
+                      v-for="category in categories"
+                      :key="category.id"
+                      :value="String(category.id)"
+                    >
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+
                 <div class="grid md:grid-cols-2 gap-4">
                   <div class="space-y-2">
                     <label :class="labelClasses">Waktu Mulai *</label>
@@ -218,9 +235,10 @@ import PopUpGagal from '../../components/PopUpGagal.vue'
 import StepIndicator from '../../components/StepIndicator.vue'
 import EventFormLayout from '../../components/EventFormLayout.vue'
 import EventPreview from '../../components/EventPreview.vue'
-import { fetchEventDetails, updateEvent } from '../../services/api'
+import { fetchCategories, fetchEventDetails, updateEvent } from '../../services/api'
 import { useEventForm } from '../../composables/useEventForm'
 import { useAuthCheck } from '../../composables/useAuthCheck'
+import type { Category } from '../../types'
 
 const router = useRouter()
 const route = useRoute()
@@ -228,6 +246,7 @@ const step = ref(route.state?.step || 1)
 const isPopupVisible = ref(false)
 const popupMessage = ref('')
 const isLoading = ref(false)
+const categories = ref<Category[]>([])
 
 useAuthCheck(true)
 
@@ -242,6 +261,7 @@ const {
   registration_deadline,
   location,
   isOffline,
+  category_id,
   isFormValid,
   isSecondStepValid,
   getFormData,
@@ -285,6 +305,14 @@ const handleUpdate = async () => {
 }
 
 onMounted(async () => {
+  fetchCategories()
+    .then((data) => {
+      categories.value = Array.isArray(data) ? data : []
+    })
+    .catch(() => {
+      categories.value = []
+    })
+
   if (route.state?.data) {
     setFormData(route.state.data)
   } else {
