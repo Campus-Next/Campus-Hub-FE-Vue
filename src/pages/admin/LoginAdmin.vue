@@ -24,27 +24,6 @@
           container-class="mb-6 w-full"
         />
 
-        <div class="flex items-center justify-between w-full mb-6">
-          <div class="flex items-center">
-            <input
-              id="remember"
-              v-model="remember"
-              type="checkbox"
-              name="remember"
-              class="w-4 h-4 text-[#003266] border-[#003266] rounded focus:ring-blue-500 transition-all duration-200"
-            >
-            <label for="remember" class="ml-2 text-sm text-[#003266]">
-              Ingat saya
-            </label>
-          </div>
-
-          <div class="text-sm">
-            <a href="#" class="font-medium text-[#003266] hover:underline transition-all duration-200">
-              Lupa password?
-            </a>
-          </div>
-        </div>
-
         <div class="w-full">
           <button
             type="submit"
@@ -78,15 +57,15 @@ import AuthLayout from '../../components/AuthLayout.vue'
 import Input from '../../components/Input.vue'
 import PopUpNotification from '../../components/PopUpNotification.vue'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
-import { login, fetchUserProfile } from '../../services/api'
+import { login } from '../../services/api'
 import { useLoginForm } from '../../composables/useAuthForm'
+import { isAuthenticated, saveAuthSession } from '../../utils/authSession'
 
 const router = useRouter()
 
 const {
   email,
   password,
-  remember,
   isLoading,
   showGagal,
   message,
@@ -101,7 +80,6 @@ const handleLogin = async () => {
       const data = await login({
         email: email.value,
         password: password.value,
-        remember: remember.value,
       })
 
       if (!data.roles?.includes('admin')) {
@@ -113,22 +91,14 @@ const handleLogin = async () => {
 
       message.value = 'Login berhasil'
 
-      if (data.access_token) {
-        localStorage.setItem('token', data.access_token)
-        localStorage.setItem('token_type', data.token_type)
-      }
-
-      try {
-        const userData = await fetchUserProfile(data.access_token)
-        localStorage.setItem('user', JSON.stringify({ ...userData, is_admin: true }))
-      } finally {
-        setTimeout(() => {
-          window.location.href = redirectPath
-        }, 200)
-        setTimeout(() => {
-          isLoading.value = false
-        }, 1000)
-      }
+      saveAuthSession({
+        token: data.access_token,
+        tokenType: data.token_type,
+        expiresIn: data.expires_in,
+        user: data.user,
+        roles: data.roles || [],
+      })
+      await router.replace(redirectPath)
     } catch (error: any) {
       message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
       showGagal.value = true
@@ -138,8 +108,7 @@ const handleLogin = async () => {
 }
 
 onMounted(() => {
-  const token = localStorage.getItem('token')
-  if (token) {
+  if (isAuthenticated()) {
     router.replace('/')
   }
 })

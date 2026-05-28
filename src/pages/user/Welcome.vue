@@ -18,7 +18,7 @@
             <h1 class="text-[32px] font-semibold text-[#003266]">
               Sebagai peserta
             </h1>
-            <RouterLink :to="`/user/login?redirect=${redirectPath}`">
+            <RouterLink :to="`/user/login?redirect=${redirectQuery}`">
               <button class="text-white tengah:w-[440px] sm:w-[400px] px-[24px] py-[16px] text-[20px] font-medium bg-[#003266] rounded-[10px] hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-300">
                 Masuk
               </button>
@@ -34,7 +34,7 @@
           <h1 class="text-[32px] font-semibold text-white">
             Sebagai penyelenggara
           </h1>
-          <RouterLink :to="`/admin/login?redirect=${redirectPath}`">
+          <RouterLink :to="`/admin/login?redirect=${redirectQuery}`">
             <button class="text-white bg-[#027FFF] rounded-[10px] tengah:w-[440px] sm:w-[400px] px-[24px] py-[16px] text-[20px] font-medium hover:scale-105 active:scale-95 hover:shadow-xl transition-all duration-300">
               Masuk
             </button>
@@ -56,12 +56,14 @@ import peserta from '../../assets/image/newuser.svg'
 import circle from '../../assets/image/circle.svg'
 import admin from '../../assets/image/newadmin.svg'
 import circle2 from '../../assets/image/circle2.svg'
+import { sanitizeRedirectPath } from '../../utils/authSession'
 
 const router = useRouter()
 const route = useRoute()
 
 const params = new URLSearchParams(location.search)
-const redirectPath = params.get('redirect') || '/'
+const redirectPath = sanitizeRedirectPath(params.get('redirect'))
+const redirectQuery = encodeURIComponent(redirectPath)
 
 onMounted(() => {
   const token = localStorage.getItem('token')

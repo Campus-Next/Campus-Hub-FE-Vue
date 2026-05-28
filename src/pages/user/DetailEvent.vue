@@ -82,7 +82,7 @@
               <div class="detail-content">
                 <p class="text-sm text-gray-500 font-medium">Kapasitas Tersisa</p>
                 <p class="font-semibold text-[16px] sm:text-[14px] text-gray-800">
-                  {{ remainingSlots }} / {{ eventData.max_participants }} Kursi
+                  {{ capacityText }}
                 </p>
               </div>
             </div>
@@ -129,12 +129,20 @@
             Lihat Tiket (Terdaftar)
           </button>
           <button
-            v-else-if="remainingSlots <= 0"
+            v-else-if="isFull"
             type="button"
             class="bg-[#A2A2A2] cursor-not-allowed font-medium w-full h-11 rounded-lg text-white text-[16px]"
             disabled
           >
             Kapasitas Penuh
+          </button>
+          <button
+            v-else-if="registrationMessage"
+            type="button"
+            class="bg-[#A2A2A2] cursor-not-allowed font-medium w-full min-h-11 rounded-lg text-white text-[15px] px-3 py-2"
+            disabled
+          >
+            {{ registrationMessage }}
           </button>
           <template v-else>
             <button
@@ -197,8 +205,32 @@ const ensureAuth = (): boolean => {
 
 const remainingSlots = computed(() => {
   if (!eventData.value) return 0
+  if (!eventData.value.max_participants || eventData.value.max_participants <= 0) return Number.POSITIVE_INFINITY
   const registered = eventData.value.participants_count ?? 0
   return Math.max(0, eventData.value.max_participants - registered)
+})
+
+const isFull = computed(() =>
+  !!eventData.value?.max_participants && eventData.value.max_participants > 0 && remainingSlots.value <= 0,
+)
+
+const capacityText = computed(() => {
+  if (!eventData.value?.max_participants || eventData.value.max_participants <= 0) return 'Tidak terbatas'
+  return `${remainingSlots.value} / ${eventData.value.max_participants} Kursi`
+})
+
+const registrationMessage = computed(() => {
+  if (!eventData.value) return ''
+  const now = new Date()
+  if (eventData.value.registration_open && now < new Date(eventData.value.registration_open)) {
+    return 'Pendaftaran Belum Dibuka'
+  }
+  if (eventData.value.registration_deadline) {
+    const deadline = new Date(eventData.value.registration_deadline)
+    deadline.setHours(23, 59, 59, 999)
+    if (now > deadline) return 'Pendaftaran Ditutup'
+  }
+  return ''
 })
 
 const viewTicket = () => {
@@ -239,7 +271,7 @@ const handleAddToCart = async () => {
   isAdding.value = true
   feedback.value = ''
   try {
-    await add(eventData.value.id, 1)
+    await add(eventData.value.id)
     feedbackError.value = false
     feedback.value = 'Acara ditambahkan ke keranjang.'
   } catch (err: any) {
@@ -255,7 +287,7 @@ const checkEnrollment = async () => {
   if (!token || !eventData.value) return
   try {
     const res = await fetchUniqueCode(eventData.value.id, token)
-    if (res && res.status !== 'cancelled') {
+    if (res?.status) {
       isEnrolled.value = true
     }
   } catch (err) {

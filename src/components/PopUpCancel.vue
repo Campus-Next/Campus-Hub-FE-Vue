@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { cancelRegistration } from '../services/api'
 import { usePopupAnimation, useClickOutside } from '../composables/usePopup'
 import StatusIcon from './StatusIcon.vue'
@@ -39,6 +39,7 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
+const router = useRouter()
 const bookingRef = ref<HTMLElement | null>(null)
 const isProcessing = ref(false)
 const gagal = ref(false)
@@ -65,7 +66,8 @@ const handleCancelBooking = async () => {
 
   try {
     await cancelRegistration(route.params.id as string, accessToken)
-    window.location.reload()
+    emit('close')
+    router.replace('/my-events')
   } catch (error: any) {
     gagal.value = true
     message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'

@@ -35,19 +35,6 @@
           container-class="mb-4 w-full"
         />
 
-        <Input
-          id="telepon"
-          v-model="formData.telepon"
-          label="No Telepon"
-          type="text"
-          name="telepon"
-          placeholder="08123456789"
-          required
-          :error="errorMessage"
-          container-class="mb-4 w-full"
-          @update:model-value="handlePhoneChange"
-        />
-
         <div class="w-full">
           <button
             type="submit"
@@ -65,7 +52,7 @@
 
       <p class="text-[#003266] font-normal text-[16px] mt-4 w-full text-center">
         Sudah punya akun?
-        <a :href="`/user/login?redirect=${redirectPath}`" class="text-[#027FFF] hover:underline ml-1">
+        <a :href="`/user/login?redirect=${redirectQuery}`" class="text-[#027FFF] hover:underline ml-1">
           Masuk
         </a>
       </p>
@@ -97,32 +84,28 @@ import PopUpNotification from '../../components/PopUpNotification.vue'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import { register } from '../../services/api'
 import { useRegisterForm } from '../../composables/useAuthForm'
+import { isAuthenticated } from '../../utils/authSession'
 
 const router = useRouter()
 
 const {
   formData,
-  errorMessage,
   isLoading,
   showPopup,
   showGagal,
   message,
   redirectPath,
+  redirectQuery,
   isFormValid,
-  handlePhoneChange,
-  validatePhone
 } = useRegisterForm()
 
 const handleSubmit = async () => {
-  if (!validatePhone()) return
-
   isLoading.value = true
   try {
     const userData = {
       name: formData.value.nama,
       email: formData.value.email,
       password: formData.value.password,
-      phone: formData.value.telepon,
     }
 
     await register(userData)
@@ -130,7 +113,7 @@ const handleSubmit = async () => {
     showPopup.value = true
 
     setTimeout(() => {
-      router.push(`/user/login?redirect=${redirectPath}`)
+      router.push(`/user/login?redirect=${redirectQuery}`)
     }, 1000)
   } catch (error: any) {
     message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
@@ -141,8 +124,7 @@ const handleSubmit = async () => {
 }
 
 onMounted(() => {
-  const token = localStorage.getItem('token')
-  if (token) {
+  if (isAuthenticated()) {
     router.replace('/')
   }
 })

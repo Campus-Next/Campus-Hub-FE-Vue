@@ -93,8 +93,8 @@
         <div class="booking w-3/12 max-w-md h-full px-6 py-6 mx-auto lg:mx-2 bg-white shadow-lg rounded-2xl flex flex-col lg:relative">
           <h2 class="font-semibold text-lg mb-4 text-center">Konfirmasi</h2>
           <div class="sub-total flex gap-4 my-2">
-            <span class="text-left font-medium text-[14px] pl-2 me-auto">Tiket</span>
-            <span class="text-right font-medium text-[14px] ms-auto">1 Kursi</span>
+            <span class="text-left font-medium text-[14px] pl-2 me-auto">Pendaftaran</span>
+            <span class="text-right font-medium text-[14px] ms-auto">1 acara</span>
           </div>
           <div class="border-b-2 border-[#003266] w-full my-4"></div>
           <div class="checkout flex flex-col">

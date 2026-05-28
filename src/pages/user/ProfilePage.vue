@@ -150,7 +150,8 @@ import PopUpDelete from '../../components/PopUpDelete.vue'
 import PopUpLogOut from '../../components/PopUpLogOut.vue'
 import PopUpBerhasil from '../../components/PopUpBerhasil.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
-import { fetchUserProfile, updateUserProfile } from '../../services/api'
+import { updateUserProfile } from '../../services/api'
+import { getStoredRoles } from '../../utils/authSession'
 
 interface User {
   name: string
@@ -158,7 +159,6 @@ interface User {
 }
 
 const router = useRouter()
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 
 const activePage = ref('info-personal')
 const user = ref<User>({
@@ -183,16 +183,15 @@ const userPhoto = computed(() => {
 const handleUpdate = async () => {
   isProcessing.value = true
   try {
-    const oldUserDataStr = localStorage.getItem('user')
-    const oldUserData = oldUserDataStr ? JSON.parse(oldUserDataStr) : {}
-
     const updated = await updateUserProfile(
       { name: user.value.name, email: user.value.email },
       token || '',
     )
+    const roles = getStoredRoles()
     localStorage.setItem('user', JSON.stringify({
       ...updated,
-      is_admin: oldUserData.is_admin === true
+      roles,
+      is_admin: roles.includes('admin'),
     }))
     datas.value = 'Profil berhasil diubah'
     showBerhasil.value = true

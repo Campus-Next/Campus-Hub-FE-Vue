@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import defaultPoster from '../assets/image/Poster.svg'
+import { resolveStorageUrl } from '../utils/helpers'
 
 interface Props {
   image?: string | null
@@ -19,15 +20,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const storage = import.meta.env.VITE_STORAGE_BASE_URL || 'http://localhost:8000/storage'
-
 const imageUrl = computed(() => {
   if (!props.image) {
     return defaultPoster
   }
-  if (props.image.startsWith('http://') || props.image.startsWith('https://')) {
-    return props.image
-  }
-  return `${storage}/${props.image}`
+  return resolveStorageUrl(props.image)
 })
 </script>

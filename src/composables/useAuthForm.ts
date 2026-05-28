@@ -1,15 +1,16 @@
 import { ref, computed } from 'vue'
+import { sanitizeRedirectPath } from '../utils/authSession'
 
 export function useLoginForm() {
   const email = ref('')
   const password = ref('')
-  const remember = ref(false)
   const isLoading = ref(false)
   const showGagal = ref(false)
   const message = ref('')
 
   const params = new URLSearchParams(location.search)
-  const redirectPath = params.get('redirect') || '/'
+  const redirectPath = sanitizeRedirectPath(params.get('redirect'))
+  const redirectQuery = encodeURIComponent(redirectPath)
 
   const isFormValid = computed(() => 
     email.value.trim() !== '' && password.value.trim() !== ''
@@ -18,11 +19,11 @@ export function useLoginForm() {
   return {
     email,
     password,
-    remember,
     isLoading,
     showGagal,
     message,
     redirectPath,
+    redirectQuery,
     isFormValid
   }
 }
@@ -32,7 +33,6 @@ export function useRegisterForm() {
     nama: '',
     email: '',
     password: '',
-    telepon: ''
   })
   
   const errorMessage = ref('')
@@ -42,26 +42,12 @@ export function useRegisterForm() {
   const message = ref('')
 
   const params = new URLSearchParams(location.search)
-  const redirectPath = params.get('redirect') || '/'
+  const redirectPath = sanitizeRedirectPath(params.get('redirect'))
+  const redirectQuery = encodeURIComponent(redirectPath)
 
   const isFormValid = computed(() => 
     Object.values(formData.value).every(value => value.trim() !== '')
   )
-
-  const handlePhoneChange = (value: string) => {
-    if (/^\d*$/.test(value)) {
-      formData.value.telepon = value
-      errorMessage.value = ''
-    }
-  }
-
-  const validatePhone = () => {
-    if (formData.value.telepon.length < 11) {
-      errorMessage.value = 'Nomor telepon harus memiliki minimal 11 digit!'
-      return false
-    }
-    return true
-  }
 
   return {
     formData,
@@ -71,8 +57,7 @@ export function useRegisterForm() {
     showGagal,
     message,
     redirectPath,
+    redirectQuery,
     isFormValid,
-    handlePhoneChange,
-    validatePhone
   }
 }

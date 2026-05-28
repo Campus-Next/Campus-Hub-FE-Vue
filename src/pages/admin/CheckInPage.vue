@@ -63,7 +63,7 @@ import { useRouter, useRoute } from 'vue-router'
 import Ellipse from '../../assets/image/Ellipse.svg'
 import Ellipse2 from '../../assets/image/Ellipse2.svg'
 import Navbar from '../../components/Navbar.vue'
-import { checkInParticipant } from '../../services/api'
+import { checkInParticipant, fetchMyOrganizedEvents } from '../../services/api'
 import PopUpGagal from '../../components/PopUpGagal.vue'
 import PopUpBerhasil from '../../components/PopUpBerhasil.vue'
 import { useAuthCheck } from '../../composables/useAuthCheck'
@@ -104,7 +104,25 @@ const handleCheckIn = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    router.replace('/welcome?redirect=/my-events')
+    return
+  }
+
+  try {
+    const organizedEvents = await fetchMyOrganizedEvents(token)
+    const ownsEvent = organizedEvents.some(event => String(event.id) === String(route.params.id))
+    if (!ownsEvent) {
+      router.replace('/my-events')
+      return
+    }
+  } catch {
+    router.replace('/my-events')
+    return
+  }
+
   document.getElementById('input-0')?.focus()
 })
 </script>

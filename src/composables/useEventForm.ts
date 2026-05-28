@@ -1,8 +1,16 @@
 import { ref, computed } from 'vue'
+import { resolveStorageUrl } from '../utils/helpers'
+
+interface EventLinkForm {
+  id?: number
+  title: string
+  url: string
+}
 
 export function useEventForm(initialData?: any) {
   const title = ref(initialData?.title || '')
   const description = ref(initialData?.description || '')
+  const category_id = ref<string | number>(initialData?.category_id || '')
 
   // Separated date & time for start
   const start_date_date = ref(initialData?.start_date_date || '')
@@ -21,6 +29,8 @@ export function useEventForm(initialData?: any) {
   // Image upload
   const imageFile = ref<File | null>(null)
   const imagePreviewUrl = ref<string | null>(null)
+  const eventLinks = ref<EventLinkForm[]>(initialData?.event_links || [])
+  const removedLinkIds = ref<number[]>([])
 
   // --- Validation ---
 
@@ -32,18 +42,35 @@ export function useEventForm(initialData?: any) {
     return !!(
       title.value &&
       description.value &&
+      category_id.value &&
       startOk &&
       endOk &&
       endTs >= startTs
     )
   })
 
+  const isLinksValid = computed(() =>
+    eventLinks.value.every((link) => {
+      const hasTitle = link.title.trim() !== ''
+      const hasUrl = link.url.trim() !== ''
+      if (!hasTitle && !hasUrl) return true
+      if (!hasTitle || !hasUrl) return false
+      try {
+        const parsed = new URL(link.url)
+        return ['http:', 'https:'].includes(parsed.protocol)
+      } catch {
+        return false
+      }
+    }),
+  )
+
   const isSecondStepValid = computed(() =>
     !!(
       max_participants.value &&
       registration_open.value &&
       registration_deadline.value &&
-      (!isOffline.value || location.value)
+      (!isOffline.value || location.value) &&
+      isLinksValid.value
     )
   )
 
@@ -79,6 +106,7 @@ export function useEventForm(initialData?: any) {
 
     formData.append('title', title.value)
     formData.append('description', description.value)
+    formData.append('category_id', String(category_id.value))
 
     // Combine date + time into 'YYYY-MM-DD HH:MM:SS'
     const combine = (date: string, time: string) => {
@@ -100,11 +128,21 @@ export function useEventForm(initialData?: any) {
     return formData
   }
 
+  const getCleanEventLinks = () =>
+    eventLinks.value
+      .map(link => ({
+        ...link,
+        title: link.title.trim(),
+        url: link.url.trim(),
+      }))
+      .filter(link => link.title && link.url)
+
   // --- Populate from API response ---
 
   const setFormData = (data: any) => {
     title.value       = data.title || ''
     description.value = data.description || data.desc || ''
+    category_id.value = data.category_id || ''
 
     // Split 'YYYY-MM-DD HH:MM:SS' (or ISO) into date + time
     const splitDateTime = (str: string) => {
@@ -133,11 +171,19 @@ export function useEventForm(initialData?: any) {
     // Pre-fill image preview from existing images array or direct path
     if (data.images && data.images.length > 0) {
       const existingPath = data.images[0].path
-      const base = import.meta.env.VITE_STORAGE_BASE_URL || ''
-      imagePreviewUrl.value = existingPath.startsWith('http') ? existingPath : `${base}/${existingPath}`
+      imagePreviewUrl.value = resolveStorageUrl(existingPath)
     } else {
       imagePreviewUrl.value = null
     }
+
+    eventLinks.value = Array.isArray(data.event_links)
+      ? data.event_links.map((link: any) => ({
+          id: link.id,
+          title: link.title || '',
+          url: link.url || '',
+        }))
+      : []
+    removedLinkIds.value = []
   }
 
   // Handle file selection
@@ -154,9 +200,21 @@ export function useEventForm(initialData?: any) {
     imagePreviewUrl.value = null
   }
 
+  const addEventLink = () => {
+    eventLinks.value.push({ title: '', url: '' })
+  }
+
+  const removeEventLink = (index: number) => {
+    const [removed] = eventLinks.value.splice(index, 1)
+    if (removed?.id) {
+      removedLinkIds.value.push(removed.id)
+    }
+  }
+
   return {
     title,
     description,
+    category_id,
     start_date_date,
     start_date_time,
     end_date_date,
@@ -168,13 +226,19 @@ export function useEventForm(initialData?: any) {
     isOffline,
     imageFile,
     imagePreviewUrl,
+    eventLinks,
+    removedLinkIds,
     isFormValid,
     isSecondStepValid,
     isFormComplete,
+    isLinksValid,
     dateErrors,
     getFormData,
+    getCleanEventLinks,
     setFormData,
     handleImageSelect,
     clearImage,
+    addEventLink,
+    removeEventLink,
   }
 }

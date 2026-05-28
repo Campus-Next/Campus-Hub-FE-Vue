@@ -67,6 +67,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { deleteAccount } from '../services/api'
+import { clearAuthSession, getToken } from '../utils/authSession'
 
 interface Props {
   setShowPopUp: (value: boolean) => void
@@ -92,12 +93,10 @@ const triggerClose = () => {
 const handleDeleteAccount = async () => {
   isProcessing.value = true
   try {
-    const data = await deleteAccount(localStorage.getItem('token') || '')
+    const data = await deleteAccount(getToken() || '')
     message.value = data.message
 
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('token_type')
+    clearAuthSession()
     router.push('/')
   } catch (error: any) {
     gagal.value = true

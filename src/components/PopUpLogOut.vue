@@ -65,13 +65,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { logout } from '../services/api'
+import { clearAuthSession, getToken } from '../utils/authSession'
 
 interface Props {
   setShowPopUp: (value: boolean) => void
 }
 
 const props = defineProps<Props>()
+const router = useRouter()
 
 const bookingRef = ref<HTMLElement | null>(null)
 const isExiting = ref(false)
@@ -90,14 +93,13 @@ const triggerClose = () => {
 const handleLogout = async () => {
   isProcessing.value = true
   try {
-    const result = await logout(localStorage.getItem('token') || '')
+    const result = await logout(getToken() || '')
     data.value = result
 
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearAuthSession()
 
     setTimeout(() => {
-      window.location.href = '/'
+      router.replace('/')
     }, 200)
   } catch (error) {
     gagal.value = true

@@ -2,7 +2,7 @@
   <div class="flex gap-x-[16px] items-center pt-4 border-t border-gray-100 mt-auto">
     <div class="relative">
       <img 
-        :src="`${storage}/${image}`" 
+        :src="resolveStorageUrl(image)" 
         :alt="`${nama}'s profile`" 
         class="w-[44px] h-[44px] rounded-full object-cover ring-2 ring-gray-100" 
       />
@@ -15,6 +15,8 @@
 </template>
 
 <script setup lang="ts">
+import { resolveStorageUrl } from '../utils/helpers'
+
 interface Props {
   image: string
   nama: string
@@ -22,6 +24,4 @@ interface Props {
 }
 
 defineProps<Props>()
-
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 </script>

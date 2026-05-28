@@ -118,6 +118,16 @@
                   >
                 </div>
 
+                <div class="space-y-2">
+                  <label :class="labelClasses">Kategori *</label>
+                  <select v-model="category_id" :class="`${inputClasses} w-full`" required>
+                    <option value="" disabled>Pilih kategori acara</option>
+                    <option v-for="category in categories" :key="category.id" :value="category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+
                 <!-- Start Date & Time -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Waktu Mulai *</label>
@@ -290,6 +300,36 @@
                     required
                   >
                 </div>
+
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between gap-4">
+                    <label :class="labelClasses">Link Acara</label>
+                    <button
+                      type="button"
+                      class="bg-blue-50 text-blue-600 border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-100 transition"
+                      @click="addEventLink"
+                    >
+                      <i class="ri-add-line mr-1" />Tambah Link
+                    </button>
+                  </div>
+                  <div v-if="eventLinks.length === 0" class="text-sm text-gray-500">
+                    Tambahkan Google Form, media sosial, atau tautan informasi acara jika diperlukan.
+                  </div>
+                  <div v-for="(link, index) in eventLinks" :key="link.id ?? index" class="grid md:grid-cols-[1fr_1fr_auto] gap-3">
+                    <input v-model="link.title" type="text" placeholder="Judul link" :class="`${inputClasses} w-full`">
+                    <input v-model="link.url" type="url" placeholder="https://example.com" :class="`${inputClasses} w-full`">
+                    <button
+                      type="button"
+                      class="border border-red-200 text-red-600 rounded-lg px-4 py-2 hover:bg-red-50 transition"
+                      @click="removeEventLink(index)"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                  <p v-if="!isLinksValid" class="text-sm text-red-600">
+                    Setiap link harus memiliki judul dan URL valid yang diawali http:// atau https://.
+                  </p>
+                </div>
               </div>
 
               <!-- Navigation Buttons -->
@@ -333,9 +373,18 @@ import PopUpGagal from '../../components/PopUpGagal.vue'
 import StepIndicator from '../../components/StepIndicator.vue'
 import EventFormLayout from '../../components/EventFormLayout.vue'
 import EventPreview from '../../components/EventPreview.vue'
-import { fetchEventDetails, updateEvent } from '../../services/api'
+import {
+  createEventLink,
+  deleteEventLink,
+  fetchCategories,
+  fetchEventDetails,
+  fetchMyOrganizedEvents,
+  updateEvent,
+  updateEventLink,
+} from '../../services/api'
 import { useEventForm } from '../../composables/useEventForm'
 import { useAuthCheck } from '../../composables/useAuthCheck'
+import type { Category } from '../../types'
 
 const router = useRouter()
 const route  = useRoute()
@@ -343,12 +392,14 @@ const step   = ref((route.state as any)?.step || 1)
 const isPopupVisible = ref(false)
 const popupMessage   = ref('')
 const isLoading      = ref(false)
+const categories = ref<Category[]>([])
 
 useAuthCheck(true)
 
 const {
   title,
   description,
+  category_id,
   start_date_date,
   start_date_time,
   end_date_date,
@@ -359,14 +410,20 @@ const {
   location,
   isOffline,
   imagePreviewUrl,
+  eventLinks,
+  removedLinkIds,
   isFormValid,
   isSecondStepValid,
   isFormComplete,
+  isLinksValid,
   dateErrors,
   getFormData,
+  getCleanEventLinks,
   setFormData,
   handleImageSelect,
   clearImage,
+  addEventLink,
+  removeEventLink,
 } = useEventForm()
 
 const inputClasses          = 'border-2 border-gray-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg px-4 py-3 transition-all duration-200 outline-none'
@@ -395,7 +452,15 @@ const handleUpdate = async () => {
   try {
     const token    = localStorage.getItem('token')
     const formData = getFormData()
-    await updateEvent(Number(route.params.id), formData, token!)
+    const eventId = Number(route.params.id)
+    await updateEvent(eventId, formData, token!)
+    const links = getCleanEventLinks()
+    await Promise.all([
+      ...links.map(link => link.id
+        ? updateEventLink(eventId, link.id, { title: link.title, url: link.url }, token!)
+        : createEventLink(eventId, { title: link.title, url: link.url }, token!)),
+      ...removedLinkIds.value.map(linkId => deleteEventLink(eventId, linkId, token!)),
+    ])
     router.push('/my-events')
   } catch (error: any) {
     popupMessage.value  = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
@@ -407,6 +472,30 @@ const handleUpdate = async () => {
 
 onMounted(async () => {
   window.scrollTo(0, 0)
+  const token = localStorage.getItem('token')
+  if (!token) {
+    router.replace(`/welcome?redirect=${encodeURIComponent(route.path)}`)
+    return
+  }
+
+  try {
+    const [categoryList, organizedEvents] = await Promise.all([
+      fetchCategories(),
+      fetchMyOrganizedEvents(token),
+    ])
+    categories.value = categoryList
+    const eventId = Number(route.params.id)
+    if (!organizedEvents.some(event => event.id === eventId)) {
+      router.replace('/my-events')
+      return
+    }
+  } catch {
+    popupMessage.value = 'Terjadi kesalahan saat memvalidasi akses event.'
+    isPopupVisible.value = true
+    router.replace('/my-events')
+    return
+  }
+
   if ((route.state as any)?.data) {
     setFormData((route.state as any).data)
   } else {

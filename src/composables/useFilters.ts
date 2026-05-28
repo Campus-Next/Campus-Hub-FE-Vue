@@ -81,25 +81,26 @@ export function useCategoryFilter<T extends { category_id?: number | null }>(eve
   }
 }
 
-const STATUS_KEYS = ['registered', 'cancelled', 'attended', 'absent'] as const
+const STATUS_KEYS = ['registered', 'attended', 'absent'] as const
 type StatusKey = (typeof STATUS_KEYS)[number]
 
 export function useStatusFilter<T extends { status: string }>(events: any) {
-  const statusFilter = ref<'All' | StatusKey>('All')
+  const statusFilter = ref<'All' | StatusKey | string>('All')
 
-  const handleStatusFilter = (status: 'All' | StatusKey) => {
-    statusFilter.value = status
+  const handleStatusFilter = (status: string | number) => {
+    statusFilter.value = String(status)
   }
 
   const filteredByStatus = computed(() => {
-    if (statusFilter.value === 'All') return events.value as T[]
+    const targetStatus = statusFilter.value.toLowerCase()
+    if (targetStatus === 'all') return events.value as T[]
     return (events.value as T[]).filter(
-      event => event.status?.toLowerCase() === statusFilter.value,
+      event => event.status?.toLowerCase() === targetStatus,
     )
   })
 
   const statusCounts = computed(() => {
-    const counts: Record<string, number> = { all: 0, registered: 0, cancelled: 0, attended: 0, absent: 0 }
+    const counts: Record<string, number> = { all: 0, registered: 0, attended: 0, absent: 0 }
     for (const event of events.value as T[]) {
       counts.all++
       const key = event.status?.toLowerCase()

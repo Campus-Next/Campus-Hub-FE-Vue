@@ -1,25 +1,20 @@
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { clearAuthSession, isAdmin, isAuthenticated } from '../utils/authSession'
 
 export function useAuthCheck(requireAdmin = false) {
   const router = useRouter()
   const route = useRoute()
 
   onMounted(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
+    if (!isAuthenticated()) {
+      clearAuthSession()
       router.push(`/welcome?redirect=${encodeURIComponent(route.path)}`)
       return
     }
 
-    if (requireAdmin) {
-      const userStr = localStorage.getItem('user')
-      if (userStr) {
-        const user = JSON.parse(userStr)
-        if (!user.is_admin) {
-          router.replace('/')
-        }
-      }
+    if (requireAdmin && !isAdmin()) {
+      router.replace('/')
     }
   })
 }

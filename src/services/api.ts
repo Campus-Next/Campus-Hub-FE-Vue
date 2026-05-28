@@ -2,9 +2,11 @@ import type {
   ApiEnvelope,
   Cart,
   Category,
+  CheckoutResult,
   Event,
   EventLink,
   EventParticipant,
+  ParticipantStatus,
   User,
 } from '../types'
 
@@ -57,7 +59,7 @@ async function request<T>(
 
 // ===== Auth =====
 
-export const login = (credentials: { email: string; password: string; remember?: boolean }) =>
+export const login = (credentials: { email: string; password: string }) =>
   request<{ access_token: string; token_type: string; expires_in: number; user: User; roles: string[] }>(
     '/auth/login',
     {
@@ -68,7 +70,7 @@ export const login = (credentials: { email: string; password: string; remember?:
     { unwrap: false },
   )
 
-export const register = (payload: { name: string; email: string; password: string; password_confirmation: string }) =>
+export const register = (payload: { name: string; email: string; password: string }) =>
   request<{ message: string }>(
     '/auth/register',
     {
@@ -212,6 +214,18 @@ export const checkInParticipant = (eventId: number | string, code: string, token
     body: JSON.stringify({ code }),
   })
 
+export const updateParticipantStatus = (
+  eventId: number | string,
+  participantId: number | string,
+  payload: { status: ParticipantStatus },
+  token: string,
+) =>
+  request<EventParticipant>(`/events/${eventId}/participants/${participantId}`, {
+    method: 'PATCH',
+    headers: buildHeaders(token, true),
+    body: JSON.stringify(payload),
+  })
+
 // ===== Event links =====
 
 export const fetchEventLinks = (eventId: number | string, token?: string) =>
@@ -281,7 +295,7 @@ export const removeCartItem = (cartId: number | string, token: string) =>
   )
 
 export const checkoutCart = (token: string) =>
-  request<EventParticipant[]>('/carts/checkout', {
+  request<CheckoutResult>('/carts/checkout', {
     method: 'POST',
     headers: buildHeaders(token),
   })

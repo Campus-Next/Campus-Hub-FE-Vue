@@ -27,7 +27,7 @@
 
       <div class="flex justify-end gap-x-3 items-center flex-shrink-0 w-56">
         <router-link
-          v-if="userData && !userData.is_admin"
+          v-if="userData && !isAdminUser"
           to="/cart"
           :class="`relative hidden lg:inline-flex items-center justify-center w-11 h-11 rounded-full border-2 ${styles.border} ${styles.buttonText} hover:scale-105 transition-all duration-300`"
           aria-label="Cart"
@@ -71,7 +71,7 @@
       <ul :class="`flex flex-col space-y-4 ${styles.text} text-[20px] font-medium`">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/my-events">MyEvent</router-link></li>
-        <li v-if="userData && !userData.is_admin"><router-link to="/cart">Keranjang</router-link></li>
+        <li v-if="userData && !isAdminUser"><router-link to="/cart">Keranjang</router-link></li>
         <li>
           <button @click="aboutus" class="transition-all duration-3000 hover:scale-105 cursor-pointer">
             About Us
@@ -87,10 +87,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import logo from '../assets/image/logo.svg'
 import logo2 from '../assets/image/logo2.svg'
+import { getStoredUser, isAdmin } from '../utils/authSession'
 
 interface UserData {
   name: string
-  is_admin?: boolean
 }
 
 const route = useRoute()
@@ -105,7 +105,6 @@ const darkThemePaths = [
   '/account/profile',
   '/account/password',
   '/events/upload',
-  '/events/preview',
   '/cart'
 ]
 
@@ -133,6 +132,8 @@ const userPhoto = computed(() => {
   return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(userData.value.name)}&size=48&background=6b7280&color=ffffff`
 })
 
+const isAdminUser = computed(() => isAdmin())
+
 const aboutus = () => {
   const aboutUsElement = document.getElementById('footer')
   
@@ -157,10 +158,7 @@ const toggleMenu = () => {
 }
 
 onMounted(() => {
-  const user = localStorage.getItem('user')
-  if (user) {
-    userData.value = JSON.parse(user)
-  }
+  userData.value = getStoredUser()
   isLoading.value = false
 
   const savedMenuState = localStorage.getItem('isMenuOpen')

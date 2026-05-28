@@ -51,24 +51,6 @@
               </span>
             </div>
 
-            <div class="flex items-center gap-2">
-              <button
-                class="w-9 h-9 rounded-lg border border-[#027FFF] text-[#027FFF] hover:bg-[#EAF4FF] transition disabled:opacity-50"
-                :disabled="item.quantity <= 1 || updatingId === item.id"
-                @click="changeQuantity(item, item.quantity - 1)"
-              >
-                <i class="ri-subtract-line" />
-              </button>
-              <span class="w-8 text-center font-semibold">{{ item.quantity }}</span>
-              <button
-                class="w-9 h-9 rounded-lg border border-[#027FFF] text-[#027FFF] hover:bg-[#EAF4FF] transition disabled:opacity-50"
-                :disabled="updatingId === item.id"
-                @click="changeQuantity(item, item.quantity + 1)"
-              >
-                <i class="ri-add-line" />
-              </button>
-            </div>
-
             <button
               class="text-red-500 hover:text-red-700 transition self-end sm:self-center"
               :disabled="removingId === item.id"
@@ -127,9 +109,8 @@ import { getEventImageUrl } from '../../utils/helpers'
 import type { Cart as CartItem } from '../../types'
 
 const router = useRouter()
-const { items, isLoading, error, itemCount, total, load, update, remove, checkout } = useCart()
+const { items, isLoading, error, itemCount, load, remove, checkout } = useCart()
 
-const updatingId = ref<number | null>(null)
 const removingId = ref<number | null>(null)
 const isCheckingOut = ref(false)
 const showSuccess = ref(false)
@@ -138,25 +119,6 @@ const successMessage = ref('')
 const errorMessage = ref('')
 
 useAuthCheck()
-
-const formatPrice = (value: string | number | undefined | null) => {
-  const num = Number(value ?? 0)
-  if (num === 0) return 'Gratis'
-  return `Rp ${num.toLocaleString('id-ID')}`
-}
-
-const changeQuantity = async (item: CartItem, quantity: number) => {
-  if (quantity < 1) return
-  updatingId.value = item.id
-  try {
-    await update(item.id, quantity)
-  } catch (err: any) {
-    errorMessage.value = err?.data || err?.message || 'Gagal memperbarui keranjang'
-    showError.value = true
-  } finally {
-    updatingId.value = null
-  }
-}
 
 const removeItem = async (item: CartItem) => {
   removingId.value = item.id
@@ -178,7 +140,7 @@ const onCheckout = async () => {
     const skippedCount = result.skipped?.length ?? 0
     successMessage.value = skippedCount === 0
       ? `Berhasil mendaftar ke ${enrolledCount} acara`
-      : `${enrolledCount} acara berhasil terdaftar, ${skippedCount} dilewati`
+      : `${enrolledCount} acara berhasil terdaftar, ${skippedCount} dilewati: ${result.skipped.map(item => item.reason).join(', ')}`
     showSuccess.value = true
   } catch (err: any) {
     errorMessage.value = err?.data || err?.message || 'Pendaftaran gagal'

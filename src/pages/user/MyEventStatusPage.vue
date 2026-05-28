@@ -4,7 +4,6 @@
   </div>
 
   <DescriptionPageRegistered v-else-if="status === 'registered'" />
-  <DescriptionPageCancel v-else-if="status === 'cancelled'" />
   <DescriptionPageAbsent v-else-if="status === 'absent'" />
   <DescriptionPageAttend v-else-if="status === 'attended'" />
 
@@ -19,7 +18,6 @@ import { useEventStatus } from '../../composables/useEventDetail'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
 import DescriptionPageRegistered from './DescriptionPageRegistered.vue'
-import DescriptionPageCancel from './DescriptionPageCancel.vue'
 import DescriptionPageAbsent from './DescriptionPageAbsent.vue'
 import DescriptionPageAttend from './DescriptionPageAttend.vue'
 

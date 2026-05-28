@@ -5,7 +5,6 @@ import {
   checkoutCart,
   fetchCart,
   removeCartItem,
-  updateCartItem,
 } from '../services/api'
 import { useAuth } from './useAuth'
 
@@ -15,16 +14,17 @@ export function useCart() {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  const itemCount = computed(() =>
-    items.value.reduce((sum, item) => sum + (item.quantity || 0), 0),
-  )
+  const itemCount = computed(() => items.value.length)
 
-  const total = computed(() =>
-    items.value.reduce((sum, item) => {
-      const fee = Number(item.event?.registration_fee ?? 0)
-      return sum + fee * item.quantity
-    }, 0),
-  )
+  const normalizeItems = (carts: Cart[]) => {
+    const byEvent = new Map<number, Cart>()
+    for (const item of carts) {
+      if (!byEvent.has(item.event_id)) {
+        byEvent.set(item.event_id, { ...item, quantity: 1 })
+      }
+    }
+    return Array.from(byEvent.values())
+  }
 
   const requireToken = () => {
     const token = getToken()
@@ -38,7 +38,7 @@ export function useCart() {
     isLoading.value = true
     error.value = null
     try {
-      items.value = await fetchCart(requireToken())
+      items.value = normalizeItems(await fetchCart(requireToken()))
     } catch (err: any) {
       error.value = err?.data || err?.message || 'Failed to load cart'
     } finally {
@@ -46,20 +46,18 @@ export function useCart() {
     }
   }
 
-  const add = async (eventId: number, quantity = 1) => {
+  const add = async (eventId: number) => {
     const token = requireToken()
-    const cart = await addToCart({ event_id: eventId, quantity }, token)
-    const existing = items.value.findIndex(i => i.id === cart.id)
-    if (existing >= 0) items.value[existing] = cart
-    else items.value.push(cart)
-    return cart
-  }
+    if (items.value.length === 0) {
+      items.value = normalizeItems(await fetchCart(token))
+    }
+    const alreadyInCart = items.value.find(item => item.event_id === eventId)
+    if (alreadyInCart) return alreadyInCart
 
-  const update = async (cartId: number, quantity: number) => {
-    const token = requireToken()
-    const cart = await updateCartItem(cartId, { quantity }, token)
-    const index = items.value.findIndex(i => i.id === cartId)
-    if (index >= 0) items.value[index] = { ...items.value[index], ...cart }
+    const cart = await addToCart({ event_id: eventId, quantity: 1 }, token)
+    const existing = items.value.findIndex(i => i.event_id === cart.event_id)
+    if (existing >= 0) items.value[existing] = { ...cart, quantity: 1 }
+    else items.value.push(cart)
     return cart
   }
 
@@ -71,10 +69,7 @@ export function useCart() {
 
   const checkout = async (): Promise<{ enrolled: EventParticipant[]; skipped: Array<{ event_id: number; reason: string }> }> => {
     const token = requireToken()
-    const result = await checkoutCart(token) as unknown as {
-      enrolled: EventParticipant[]
-      skipped: Array<{ event_id: number; reason: string }>
-    }
+    const result = await checkoutCart(token)
     items.value = []
     return result
   }
@@ -84,10 +79,8 @@ export function useCart() {
     isLoading,
     error,
     itemCount,
-    total,
     load,
     add,
-    update,
     remove,
     checkout,
   }

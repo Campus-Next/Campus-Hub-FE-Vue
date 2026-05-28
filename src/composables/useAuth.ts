@@ -1,42 +1,29 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { User } from '../types'
-import { STORAGE_KEYS } from '../constants'
+import type { AuthSessionUser } from '../types'
+import {
+  clearAuthSession,
+  getStoredUser,
+  getToken as getStoredToken,
+  isAdmin as hasAdminRole,
+  isAuthenticated as hasValidSession,
+} from '../utils/authSession'
 
 export function useAuth() {
   const router = useRouter()
-  const user = ref<User | null>(null)
+  const user = ref<AuthSessionUser | null>(getStoredUser())
 
-  const isAuthenticated = computed(() => !!localStorage.getItem(STORAGE_KEYS.TOKEN))
-  const isAdmin = computed(() => user.value?.is_admin === true)
+  const isAuthenticated = computed(() => hasValidSession())
+  const isAdmin = computed(() => hasAdminRole())
 
-  const getUser = (): User | null => {
-    try {
-      const userData = localStorage.getItem(STORAGE_KEYS.USER)
-      return userData ? JSON.parse(userData) : null
-    } catch (error) {
-      console.error('Error parsing user data:', error)
-      return null
-    }
-  }
+  const getUser = (): AuthSessionUser | null => getStoredUser()
 
   const getToken = (): string | null => {
-    return localStorage.getItem(STORAGE_KEYS.TOKEN)
-  }
-
-  const setUser = (userData: User) => {
-    user.value = userData
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData))
-  }
-
-  const setToken = (token: string) => {
-    localStorage.setItem(STORAGE_KEYS.TOKEN, token)
+    return getStoredToken()
   }
 
   const logout = () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.USER)
-    localStorage.removeItem(STORAGE_KEYS.TOKEN_TYPE)
+    clearAuthSession()
     user.value = null
     router.push('/')
   }
@@ -63,8 +50,6 @@ export function useAuth() {
     isAdmin,
     getUser,
     getToken,
-    setUser,
-    setToken,
     logout,
     requireAuth,
     requireGuest,
