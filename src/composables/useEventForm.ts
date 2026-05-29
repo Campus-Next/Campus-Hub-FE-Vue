@@ -49,20 +49,26 @@ export function useEventForm(initialData?: any) {
     )
   })
 
-  const isLinksValid = computed(() =>
-    eventLinks.value.every((link) => {
-      const hasTitle = link.title.trim() !== ''
-      const hasUrl = link.url.trim() !== ''
-      if (!hasTitle && !hasUrl) return true
-      if (!hasTitle || !hasUrl) return false
-      try {
-        const parsed = new URL(link.url)
-        return ['http:', 'https:'].includes(parsed.protocol)
-      } catch {
-        return false
+  const validateEventLink = (link: EventLinkForm) => {
+    const title = link.title.trim()
+    const url = link.url.trim()
+    if (!title && !url) return ''
+    if (!title || !url) return 'Judul dan URL harus diisi lengkap.'
+    if (title.length > 255 || url.length > 255) return 'Judul dan URL maksimal 255 karakter.'
+    try {
+      const parsed = new URL(url)
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return 'URL harus diawali http:// atau https://.'
       }
-    }),
-  )
+    } catch {
+      return 'URL harus valid dan diawali http:// atau https://.'
+    }
+    return ''
+  }
+
+  const eventLinkErrors = computed(() => eventLinks.value.map(validateEventLink))
+
+  const isLinksValid = computed(() => eventLinkErrors.value.every(error => !error))
 
   const isSecondStepValid = computed(() =>
     !!(
@@ -228,6 +234,7 @@ export function useEventForm(initialData?: any) {
     imagePreviewUrl,
     eventLinks,
     removedLinkIds,
+    eventLinkErrors,
     isFormValid,
     isSecondStepValid,
     isFormComplete,

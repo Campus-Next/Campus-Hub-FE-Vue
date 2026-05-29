@@ -92,6 +92,24 @@
             {{ eventData.description || '(Deskripsi belum diisi)' }}
           </p>
         </div>
+
+        <div v-if="eventLinks.length > 0" class="event-links mt-6">
+          <h3 class="font-semibold text-[18px] mb-3 text-[#003266]">Tautan Acara</h3>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-stretch">
+            <li v-for="(link, index) in eventLinks" :key="link.id ?? index" class="min-w-0 h-full">
+              <a
+                :href="link.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                :title="link.title"
+                class="flex h-full min-h-[68px] min-w-0 items-center gap-3 p-3 rounded-lg border border-[#027FFF] bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <i class="ri-external-link-line text-[#027FFF] text-xl flex-shrink-0" />
+                <span class="event-link-title min-w-0 font-medium text-[#003266] text-[14px]">{{ link.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -121,8 +139,11 @@ const props = defineProps<{
     max_participants?: string | number
     isOffline?: boolean
     imagePreviewUrl?: string | null
+    event_links?: Array<{ id?: number; title: string; url: string }>
   }
 }>()
+
+const eventLinks = computed(() => props.eventData.event_links || [])
 
 const formattedStartDate = computed(() => {
   const d = props.eventData.start_date_date
@@ -136,3 +157,13 @@ const formattedStartDate = computed(() => {
   }
 })
 </script>
+
+<style scoped>
+.event-link-title {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+</style>

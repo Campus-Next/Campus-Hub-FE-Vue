@@ -98,16 +98,17 @@
 
           <div v-if="eventData.event_links && eventData.event_links.length > 0" class="mt-6">
             <h2 class="font-semibold text-[18px] text-[#003266] mb-3">Link Acara</h2>
-            <ul class="flex flex-col gap-2">
-              <li v-for="link in eventData.event_links" :key="link.id">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-[486px] items-stretch">
+              <li v-for="link in eventData.event_links" :key="link.id" class="min-w-0 h-full">
                 <a
                   :href="link.url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center gap-3 p-3 rounded-lg border border-[#027FFF] bg-blue-50 hover:bg-blue-100 transition-colors"
+                  :title="link.title"
+                  class="flex h-full min-h-[68px] min-w-0 items-center gap-3 p-3 rounded-lg border border-[#027FFF] bg-blue-50 hover:bg-blue-100 transition-colors"
                 >
-                  <i class="ri-external-link-line text-[#027FFF] text-xl"></i>
-                  <span class="font-medium text-[#003266] text-[14px]">{{ link.title }}</span>
+                  <i class="ri-external-link-line text-[#027FFF] text-xl flex-shrink-0"></i>
+                  <span class="event-link-title min-w-0 font-medium text-[#003266] text-[14px]">{{ link.title }}</span>
                 </a>
               </li>
             </ul>
@@ -336,6 +337,16 @@ onMounted(async () => {
   }, 500)
 })
 </script>
+
+<style scoped>
+.event-link-title {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+</style>
 
 
 

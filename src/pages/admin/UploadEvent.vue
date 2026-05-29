@@ -39,6 +39,7 @@
                 max_participants,
                 isOffline,
                 imagePreviewUrl,
+                event_links: getCleanEventLinks(),
               }"
             >
               <template #actions>
@@ -315,16 +316,33 @@
                   <div v-if="eventLinks.length === 0" class="text-sm text-gray-500">
                     Tambahkan Google Form, media sosial, atau tautan informasi acara jika diperlukan.
                   </div>
-                  <div v-for="(link, index) in eventLinks" :key="index" class="grid md:grid-cols-[1fr_1fr_auto] gap-3">
-                    <input v-model="link.title" type="text" placeholder="Judul link" :class="`${inputClasses} w-full`">
-                    <input v-model="link.url" type="url" placeholder="https://example.com" :class="`${inputClasses} w-full`">
+                  <div v-for="(link, index) in eventLinks" :key="index" class="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] gap-3">
+                    <input
+                      v-model="link.title"
+                      type="text"
+                      maxlength="255"
+                      placeholder="Judul link"
+                      :class="[inputClasses, 'w-full min-w-0', eventLinkErrors[index] ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : '']"
+                    >
+                    <input
+                      v-model="link.url"
+                      type="url"
+                      maxlength="255"
+                      placeholder="https://example.com"
+                      :class="[inputClasses, 'w-full min-w-0', eventLinkErrors[index] ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : '']"
+                    >
                     <button
                       type="button"
-                      class="border border-red-200 text-red-600 rounded-lg px-4 py-2 hover:bg-red-50 transition"
+                      class="border border-red-200 text-red-600 rounded-lg w-11 h-11 hover:bg-red-50 transition flex items-center justify-center"
+                      aria-label="Hapus link"
                       @click="removeEventLink(index)"
                     >
-                      Hapus
+                      <i class="ri-delete-bin-line text-lg" />
                     </button>
+                    <p v-if="eventLinkErrors[index]" class="md:col-span-3 text-sm text-red-600 flex items-center gap-1 -mt-1">
+                      <i class="ri-error-warning-line" />
+                      {{ eventLinkErrors[index] }}
+                    </p>
                   </div>
                   <p v-if="!isLinksValid" class="text-sm text-red-600">
                     Setiap link harus memiliki judul dan URL valid yang diawali http:// atau https://.
@@ -403,6 +421,7 @@ const {
   isOffline,
   imagePreviewUrl,
   eventLinks,
+  eventLinkErrors,
   isFormValid,
   isSecondStepValid,
   isFormComplete,

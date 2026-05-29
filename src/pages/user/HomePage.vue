@@ -82,13 +82,13 @@
         Jelajahi Acara Unggulan
       </h1>
 
-      <div v-animate class="flex flex-wrap justify-center mb-[80px] relative z-10 w-full max-w-7xl">
+      <div v-animate class="flex flex-wrap justify-center mb-[80px] relative z-10 w-full max-w-[1320px]">
         <div v-if="isLoading" class="flex items-center justify-center py-20 w-full">
           <div class="loader w-16 h-16 border-4 border-[#027FFF] border-t-transparent rounded-full animate-spin"></div>
           <p class="ml-4 text-lg font-medium">Loading...</p>
         </div>
         <p v-else-if="error" class="text-red-500 py-20">{{ error }}</p>
-        <CardPage v-else :events="events" />
+        <CardPage v-else :events="events" compact />
       </div>
 
       <img
