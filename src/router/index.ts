@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { clearAuthSession, isAdmin, isAuthenticated } from '../utils/authSession'
 
 const authRedirect = (path: string) => `/welcome?redirect=${encodeURIComponent(path)}`
+const userLoginRedirect = (path: string) => `/user/login?redirect=${encodeURIComponent(path)}`
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -115,6 +116,9 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAuth && !hasSession) {
     clearAuthSession()
+    if (to.meta.requiresUser) {
+      return userLoginRedirect(to.fullPath)
+    }
     return authRedirect(to.fullPath)
   }
 

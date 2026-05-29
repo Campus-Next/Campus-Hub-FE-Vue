@@ -28,7 +28,7 @@
       <div class="flex justify-end gap-x-3 items-center flex-shrink-0 w-auto min-w-fit">
         <router-link
           v-if="!isAdminUser"
-          to="/cart"
+          :to="cartRoute"
           :class="`relative inline-flex items-center justify-center w-11 h-11 min-w-11 min-h-11 aspect-square flex-none shrink-0 rounded-full border-2 ${styles.border} ${styles.buttonText} hover:scale-105 transition-all duration-300`"
           aria-label="Cart"
         >
@@ -71,7 +71,7 @@
       <ul :class="`flex flex-col space-y-4 ${styles.text} text-[20px] font-medium`">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/my-events">MyEvent</router-link></li>
-        <li v-if="!isAdminUser"><router-link to="/cart">Keranjang</router-link></li>
+        <li v-if="!isAdminUser"><router-link :to="cartRoute">Keranjang</router-link></li>
         <li>
           <button @click="aboutus" class="transition-all duration-3000 hover:scale-105 cursor-pointer">
             About Us
@@ -87,7 +87,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import logo from '../assets/image/logo.svg'
 import logo2 from '../assets/image/logo2.svg'
-import { AUTH_SESSION_EVENT, getStoredUser, isAdmin } from '../utils/authSession'
+import { AUTH_SESSION_EVENT, getStoredUser, isAdmin, isAuthenticated } from '../utils/authSession'
 
 interface UserData {
   name: string
@@ -137,6 +137,14 @@ const isAdminUser = computed(() => {
   authVersion.value
   route.fullPath
   return isAdmin()
+})
+
+const cartRoute = computed(() => {
+  authVersion.value
+  route.fullPath
+  return isAuthenticated()
+    ? '/cart'
+    : { path: '/user/login', query: { redirect: '/cart' } }
 })
 
 const syncAuthState = () => {
