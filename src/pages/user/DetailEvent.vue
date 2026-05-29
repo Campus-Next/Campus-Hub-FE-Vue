@@ -96,9 +96,9 @@
             </p>
           </div>
 
-          <div v-if="eventData.event_links && eventData.event_links.length > 0" class="mt-6">
+          <div v-if="eventData.event_links && eventData.event_links.length > 0" class="mt-6 w-full">
             <h2 class="font-semibold text-[18px] text-[#003266] mb-3">Link Acara</h2>
-            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-[486px] items-stretch">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full items-stretch">
               <li v-for="link in eventData.event_links" :key="link.id" class="min-w-0 h-full">
                 <a
                   :href="link.url"

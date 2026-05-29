@@ -1,9 +1,6 @@
 <template>
   <AuthLayout title="Masuk Penyelenggara" subtitle="Kelola acara kampusmu di Campus Hub">
     <div class="w-full flex flex-col max-w-[280px] lg:max-w-[480px] sm:max-w-[320px] items-center">
-      <p class="text-[#003266] font-normal text-[18px] mb-6 w-full">
-        Gunakan akun penyelenggara/admin yang telah terdaftar.
-      </p>
 
       <form class="w-full flex flex-col items-center" @submit.prevent="handleLogin">
         <Input
