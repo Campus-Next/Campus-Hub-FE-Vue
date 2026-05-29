@@ -1,5 +1,5 @@
 <template>
-  <div class="detail-event h-screen">
+  <div class="detail-event min-h-screen relative overflow-hidden">
     <Navbar />
 
     <div v-if="error" class="flex justify-center items-center h-screen">
@@ -11,7 +11,7 @@
 
     <div
       v-else-if="eventData"
-      :class="['detail-event-container [1024px] pt-10 mx-4 lg:mx-20', isLoaded ? 'loaded' : '', isExiting ? 'exiting' : '']"
+      :class="['detail-event-container pt-10 mx-4 lg:mx-20', isLoaded ? 'loaded' : '', isExiting ? 'exiting' : '']"
     >
       <div class="breadcrumb pt-auto flex ml-2 pb-10">
         <ol class="list-none flex text-black text-medium">
@@ -23,8 +23,8 @@
         </ol>
       </div>
 
-      <div class="content-box flex flex-col md:flex-row">
-        <div class="PosterEvent w-3/12 h-1/2">
+      <div class="content-box flex flex-col lg:flex-row items-start gap-8">
+        <div class="PosterEvent w-full max-w-[416px] mx-auto lg:mx-0 lg:w-[30%] xl:w-[27%] aspect-[21/25] flex-shrink-0 lg:mt-1">
           <img
             class="w-full h-full object-cover rounded-2xl shadow-lg"
             :src="getEventImageUrl(eventData)"
@@ -32,11 +32,11 @@
           />
         </div>
 
-        <div class="description text-left mx-8 mt-4 md:mt-0 md:ml-8 w-6/12">
-          <h1 class="font-bold text-[32px] py-4 sm:text-[24px]">
+        <div class="description text-left mt-4 lg:mt-0 flex-1 min-w-0">
+          <h1 class="font-bold text-[34px] pt-0 pb-2 sm:text-[26px]">
             {{ eventData.title }}
           </h1>
-          <div class="border-b-2 border-[#003266] w-full my-4"></div>
+          <div class="border-b-2 border-[#003266] w-full mt-1 mb-4"></div>
 
           <div class="event-details grid grid-cols-1 lg:grid-cols-2 gap-6 my-6">
             <div class="detail-item flex items-center gap-3">
@@ -104,29 +104,40 @@
                   :href="link.url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-2 text-[#027FFF] hover:underline"
+                  class="flex items-center gap-3 p-3 rounded-lg border border-[#027FFF] bg-blue-50 hover:bg-blue-100 transition-colors"
                 >
-                  <i class="ri-external-link-line"></i>
-                  <span>{{ link.title }}</span>
+                  <i class="ri-external-link-line text-[#027FFF] text-xl"></i>
+                  <span class="font-medium text-[#003266] text-[14px]">{{ link.title }}</span>
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div class="booking w-full md:w-3/12 px-6 py-6 mx-auto bg-white shadow-lg rounded-2xl flex flex-col mt-4 md:mt-0 gap-4">
-          <h1 class="text-left font-semibold text-[20px] sm:text-[18px] pl-2 lg:text-left sm:text-center">
+        <div class="booking w-full sm:w-fit lg:w-[260px] px-4 py-5 bg-white shadow-lg rounded-2xl flex flex-col mt-4 lg:mt-0 gap-4 flex-shrink-0">
+          <h1 class="text-left font-semibold text-[18px]">
             Pendaftaran Event
           </h1>
+          <p v-if="isCancelled" class="text-sm text-left text-red-600 font-medium">
+            Pendaftaran sebelumnya telah dibatalkan. Kamu masih bisa daftar ulang jika tersedia.
+          </p>
           <p v-if="feedback" :class="['text-sm text-center', feedbackError ? 'text-red-600 font-medium' : 'text-green-600 font-medium']">{{ feedback }}</p>
           
           <button
-            v-if="isEnrolled"
+            v-if="isRegistered"
             type="button"
             class="bg-green-600 hover:bg-green-700 font-medium w-full h-11 rounded-lg text-white text-[16px] transition-colors"
             @click="viewTicket"
           >
             Lihat Tiket (Terdaftar)
+          </button>
+          <button
+            v-else-if="hasStatusDetail"
+            type="button"
+            class="bg-[#027FFF] hover:bg-[#0066CC] font-medium w-full h-11 rounded-lg text-white text-[16px] transition-colors"
+            @click="viewTicket"
+          >
+            {{ statusDetailLabel }}
           </button>
           <button
             v-else-if="isFull"
@@ -162,11 +173,19 @@
               {{ isRegistering ? 'Mendaftar...' : 'Daftar Sekarang' }}
             </button>
           </template>
+          <button
+            v-if="isCancelled"
+            type="button"
+            class="bg-white border-2 border-red-400 hover:bg-red-50 font-medium w-full h-11 rounded-lg text-red-600 text-[15px] transition-colors"
+            @click="viewTicket"
+          >
+            Lihat Riwayat Pembatalan
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 -z-10">
+    <div class="absolute bottom-0 left-0 -z-10">
       <img src="../../assets/image/Ellipse.svg" alt="Background" class="w-[300px]" />
     </div>
   </div>
@@ -180,7 +199,8 @@ import { useAuth } from '../../composables/useAuth'
 import { useCart } from '../../composables/useCart'
 import Navbar from '../../components/Navbar.vue'
 import { getEventImageUrl } from '../../utils/helpers'
-import type { Event } from '../../types'
+import { isAuthenticated } from '../../utils/authSession'
+import type { Event, ParticipantStatus } from '../../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -193,12 +213,12 @@ const error = ref<string | null>(null)
 const isLoaded = ref(false)
 const isExiting = ref(false)
 const isRegistering = ref(false)
-const isEnrolled = ref(false)
+const participantStatus = ref<ParticipantStatus | null>(null)
 const feedback = ref('')
 const feedbackError = ref(false)
 
 const ensureAuth = (): boolean => {
-  if (getToken()) return true
+  if (isAuthenticated()) return true
   router.push(`/user/login?redirect=${encodeURIComponent(route.fullPath)}`)
   return false
 }
@@ -219,6 +239,11 @@ const capacityText = computed(() => {
   return `${remainingSlots.value} / ${eventData.value.max_participants} Kursi`
 })
 
+const isRegistered = computed(() => participantStatus.value === 'registered')
+const isCancelled = computed(() => participantStatus.value === 'cancelled')
+const hasStatusDetail = computed(() => participantStatus.value === 'attended' || participantStatus.value === 'absent')
+const statusDetailLabel = computed(() => participantStatus.value === 'attended' ? 'Lihat Status Kehadiran' : 'Lihat Detail Status')
+
 const registrationMessage = computed(() => {
   if (!eventData.value) return ''
   const now = new Date()
@@ -235,7 +260,7 @@ const registrationMessage = computed(() => {
 
 const viewTicket = () => {
   if (eventData.value) {
-    router.push(`/my-events/${eventData.value.id}/kode-unik`)
+    router.push(`/my-events/${eventData.value.id}/view`)
   }
 }
 
@@ -243,20 +268,21 @@ const handleRegister = async () => {
   if (!eventData.value || !ensureAuth()) return
   isRegistering.value = true
   feedback.value = ''
+  const previousStatus = participantStatus.value
   try {
     const token = getToken()
     if (!token) return
     await enrollEvent(eventData.value.id, token)
     feedbackError.value = false
     feedback.value = 'Pendaftaran berhasil!'
-    isEnrolled.value = true
-    if (eventData.value.participants_count !== undefined) {
+    participantStatus.value = 'registered'
+    if (previousStatus !== 'registered' && previousStatus !== 'attended' && eventData.value.participants_count !== undefined) {
       eventData.value.participants_count++
-    } else {
+    } else if (eventData.value.participants_count === undefined) {
       eventData.value.participants_count = 1
     }
     setTimeout(() => {
-      router.push(`/my-events/${eventData.value?.id}/kode-unik`)
+      router.push(`/my-events/${eventData.value?.id}/view`)
     }, 1500)
   } catch (err: any) {
     feedbackError.value = true
@@ -288,10 +314,10 @@ const checkEnrollment = async () => {
   try {
     const res = await fetchUniqueCode(eventData.value.id, token)
     if (res?.status) {
-      isEnrolled.value = true
+      participantStatus.value = res.status
     }
   } catch (err) {
-    isEnrolled.value = false
+    participantStatus.value = null
   }
 }
 

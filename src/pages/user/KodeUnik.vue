@@ -67,6 +67,10 @@ const loadUniqueCode = async () => {
   try {
     const data = await fetchUniqueCode(route.params.id as string, localStorage.getItem('token')!)
     const uniqueCode = data.unique_code
+    if (data.status !== 'registered' || !uniqueCode) {
+      router.replace(`/my-events/${route.params.id}/view`)
+      return
+    }
     if (uniqueCode && uniqueCode.length === 4) {
       code.value = uniqueCode.split('')
     } else {

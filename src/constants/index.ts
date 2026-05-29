@@ -10,7 +10,8 @@ export const STORAGE_KEYS = {
 export const EVENT_STATUS = {
   REGISTERED: 'registered',
   ATTENDED: 'attended',
-  ABSENT: 'absent'
+  ABSENT: 'absent',
+  CANCELLED: 'cancelled'
 } as const
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'

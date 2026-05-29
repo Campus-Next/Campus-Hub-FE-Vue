@@ -108,7 +108,12 @@ const handleClose = () => {
 }
 
 watch(() => props.isVisible, (newVal) => {
+  if (enterTimer) clearTimeout(enterTimer)
+  if (exitTimer) clearTimeout(exitTimer)
+
   if (newVal) {
+    isEntering.value = false
+    isExiting.value = false
     enterTimer = setTimeout(() => {
       isEntering.value = true
     }, 10)
@@ -116,7 +121,7 @@ watch(() => props.isVisible, (newVal) => {
       handleClose()
     }, 2000)
   }
-})
+}, { immediate: true })
 
 onUnmounted(() => {
   if (enterTimer) clearTimeout(enterTimer)

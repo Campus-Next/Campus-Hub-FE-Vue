@@ -1,6 +1,10 @@
 <template>
-  <AuthLayout title="Selamat Datang!">
-    <div class="w-full flex flex-col max-w-[250px] lg:max-w-[420px] sm:max-w-[282px] items-center">
+  <AuthLayout title="Masuk Penyelenggara" subtitle="Kelola acara kampusmu di Campus Hub">
+    <div class="w-full flex flex-col max-w-[280px] lg:max-w-[480px] sm:max-w-[320px] items-center">
+      <p class="text-[#003266] font-normal text-[18px] mb-6 w-full">
+        Gunakan akun penyelenggara/admin yang telah terdaftar.
+      </p>
+
       <form class="w-full flex flex-col items-center" @submit.prevent="handleLogin">
         <Input
           id="email"
@@ -27,13 +31,13 @@
         <div class="w-full">
           <button
             type="submit"
-            :disabled="!isFormValid"
+            :disabled="!isFormValid || isLoading"
             :class="[
-              'w-full px-[24px] py-[16px] text-[20px] font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 hover:scale-105',
-              isFormValid ? 'bg-[#003266] hover:bg-[#002855] focus:ring-[#003266] active:scale-95' : 'bg-[#A2A2A2] cursor-not-allowed'
+              'w-full px-[24px] py-[16px] text-[20px] font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 flex items-center justify-center',
+              isFormValid ? 'bg-[#003266] hover:bg-[#002855] focus:ring-[#003266]' : 'bg-[#A2A2A2] cursor-not-allowed'
             ]"
           >
-            <LoadingSpinner v-if="isLoading" color-class="text-gray-500" />
+            <LoadingSpinner v-if="isLoading" color-class="text-white" />
             <span v-else>Masuk</span>
           </button>
         </div>
@@ -51,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '../../components/AuthLayout.vue'
 import Input from '../../components/Input.vue'
@@ -73,6 +77,13 @@ const {
   isFormValid
 } = useLoginForm()
 
+const showErrorPopup = async (text: string) => {
+  message.value = text
+  showGagal.value = false
+  await nextTick()
+  showGagal.value = true
+}
+
 const handleLogin = async () => {
   if (isFormValid.value) {
     try {
@@ -83,8 +94,7 @@ const handleLogin = async () => {
       })
 
       if (!data.roles?.includes('admin')) {
-        message.value = 'Akun ini bukan akun admin.'
-        showGagal.value = true
+        await showErrorPopup('Akun ini bukan akun admin.')
         isLoading.value = false
         return
       }
@@ -100,8 +110,7 @@ const handleLogin = async () => {
       })
       await router.replace(redirectPath)
     } catch (error: any) {
-      message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
-      showGagal.value = true
+      await showErrorPopup(error.data || 'Koneksi Timeout, Silahkan Coba Lagi')
       isLoading.value = false
     }
   }

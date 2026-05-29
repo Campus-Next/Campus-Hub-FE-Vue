@@ -1,6 +1,12 @@
 import { STORAGE_KEYS } from '../constants'
 import type { AuthSession, AuthSessionUser, User } from '../types'
 
+export const AUTH_SESSION_EVENT = 'auth-session-changed'
+
+const notifyAuthSessionChanged = () => {
+  window.dispatchEvent(new Event(AUTH_SESSION_EVENT))
+}
+
 const safeJsonParse = <T>(value: string | null): T | null => {
   if (!value) return null
   try {
@@ -55,6 +61,7 @@ export const clearAuthSession = () => {
   localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRES_AT)
   localStorage.removeItem(STORAGE_KEYS.ROLES)
   localStorage.removeItem(STORAGE_KEYS.USER)
+  notifyAuthSessionChanged()
 }
 
 export const saveAuthSession = (payload: {
@@ -77,6 +84,7 @@ export const saveAuthSession = (payload: {
   localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRES_AT, String(expiresAt))
   localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(roles))
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(sessionUser))
+  notifyAuthSessionChanged()
 
   return {
     token: payload.token,

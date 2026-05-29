@@ -81,7 +81,7 @@ export function useCategoryFilter<T extends { category_id?: number | null }>(eve
   }
 }
 
-const STATUS_KEYS = ['registered', 'attended', 'absent'] as const
+const STATUS_KEYS = ['registered', 'attended', 'absent', 'cancelled'] as const
 type StatusKey = (typeof STATUS_KEYS)[number]
 
 export function useStatusFilter<T extends { status: string }>(events: any) {
@@ -100,7 +100,7 @@ export function useStatusFilter<T extends { status: string }>(events: any) {
   })
 
   const statusCounts = computed(() => {
-    const counts: Record<string, number> = { all: 0, registered: 0, attended: 0, absent: 0 }
+    const counts: Record<string, number> = { all: 0, registered: 0, attended: 0, absent: 0, cancelled: 0 }
     for (const event of events.value as T[]) {
       counts.all++
       const key = event.status?.toLowerCase()

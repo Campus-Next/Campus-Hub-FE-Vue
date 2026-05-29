@@ -151,7 +151,7 @@ import PopUpLogOut from '../../components/PopUpLogOut.vue'
 import PopUpBerhasil from '../../components/PopUpBerhasil.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
 import { updateUserProfile } from '../../services/api'
-import { getStoredRoles } from '../../utils/authSession'
+import { AUTH_SESSION_EVENT, getStoredRoles } from '../../utils/authSession'
 
 interface User {
   name: string
@@ -193,11 +193,10 @@ const handleUpdate = async () => {
       roles,
       is_admin: roles.includes('admin'),
     }))
+    window.dispatchEvent(new Event(AUTH_SESSION_EVENT))
+    user.value = { name: updated.name, email: updated.email }
     datas.value = 'Profil berhasil diubah'
     showBerhasil.value = true
-    setTimeout(() => {
-      window.location.reload()
-    }, 2000)
   } catch (error: any) {
     datas.value = error.data || 'Koneksi bermasalah, silahkan coba lagi'
     showGagal.value = true

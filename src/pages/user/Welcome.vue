@@ -56,7 +56,7 @@ import peserta from '../../assets/image/newuser.svg'
 import circle from '../../assets/image/circle.svg'
 import admin from '../../assets/image/newadmin.svg'
 import circle2 from '../../assets/image/circle2.svg'
-import { sanitizeRedirectPath } from '../../utils/authSession'
+import { clearAuthSession, isAuthenticated, sanitizeRedirectPath } from '../../utils/authSession'
 
 const router = useRouter()
 const route = useRoute()
@@ -66,9 +66,10 @@ const redirectPath = sanitizeRedirectPath(params.get('redirect'))
 const redirectQuery = encodeURIComponent(redirectPath)
 
 onMounted(() => {
-  const token = localStorage.getItem('token')
-  if (token) {
+  if (isAuthenticated()) {
     router.replace('/')
+    return
   }
+  clearAuthSession()
 })
 </script>

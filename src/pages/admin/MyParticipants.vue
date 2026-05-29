@@ -32,7 +32,8 @@
               { value: 'All', label: 'All', count: statusCounts.all },
               { value: 'Registered', label: 'Registered', count: statusCounts.registered },
               { value: 'Attended', label: 'Attended', count: statusCounts.attended },
-              { value: 'Absent', label: 'Absent', count: statusCounts.absent }
+              { value: 'Absent', label: 'Absent', count: statusCounts.absent },
+              { value: 'Cancelled', label: 'Cancelled', count: statusCounts.cancelled }
             ]"
             :active-tab="statusFilter"
             @change="handleStatusFilter"
@@ -59,14 +60,6 @@
                   <span class="text-xs text-gray-400">Status: {{ participant.status }}</span>
                 </div>
               </div>
-              <button
-                v-if="participant.status === 'registered'"
-                class="bg-transparent border-2 border-[#027FFF] font-medium px-4 h-10 rounded-lg text-sm text-black hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400"
-                :disabled="markingAbsentId === participant.id"
-                @click="markAbsent(participant)"
-              >
-                {{ markingAbsentId === participant.id ? 'Memproses...' : 'Tandai Absen' }}
-              </button>
             </div>
             <div v-if="sortedEvents.length === 0">No participants found.</div>
           </div>
@@ -82,7 +75,7 @@ import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import FilterTabs from '../../components/FilterTabs.vue'
-import { fetchEventParticipants, fetchMyOrganizedEvents, updateParticipantStatus } from '../../services/api'
+import { fetchEventParticipants, fetchMyOrganizedEvents } from '../../services/api'
 import { useAuthCheck } from '../../composables/useAuthCheck'
 import { useStatusFilter } from '../../composables/useFilters'
 import type { EventParticipant } from '../../types'
@@ -94,7 +87,6 @@ const isLoading = ref(true)
 const searchQuery = ref('')
 const sortOption = ref('date')
 const isDropdownOpen = ref(false)
-const markingAbsentId = ref<number | null>(null)
 
 useAuthCheck(true)
 
@@ -126,33 +118,10 @@ const sortedEvents = computed(() => {
   return sorted
 })
 
-const markAbsent = async (participant: EventParticipant) => {
-  const token = localStorage.getItem('token')
-  if (!token) return
-
-  markingAbsentId.value = participant.id
-  try {
-    const updated = await updateParticipantStatus(
-      route.params.id as string,
-      participant.id,
-      { status: 'absent' },
-      token,
-    )
-    const index = events.value.findIndex(item => item.id === participant.id)
-    if (index >= 0) {
-      events.value[index] = { ...events.value[index], ...updated }
-    }
-  } catch (error: any) {
-    alert(error.data || 'Gagal menandai peserta absen')
-  } finally {
-    markingAbsentId.value = null
-  }
-}
-
 watch(
   () => (route as any).state?.activeTab,
   (activeTab) => {
-    if (['All', 'Registered', 'Attended', 'Absent'].includes(activeTab)) {
+    if (['All', 'Registered', 'Attended', 'Absent', 'Cancelled'].includes(activeTab)) {
       statusFilter.value = activeTab as any
     }
   },

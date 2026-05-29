@@ -28,18 +28,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { cancelRegistration } from '../services/api'
 import { usePopupAnimation, useClickOutside } from '../composables/usePopup'
 import StatusIcon from './StatusIcon.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
+import type { EventParticipant } from '../types'
 
 const emit = defineEmits<{
   close: []
+  cancelled: [participant: EventParticipant]
 }>()
 
 const route = useRoute()
-const router = useRouter()
 const bookingRef = ref<HTMLElement | null>(null)
 const isProcessing = ref(false)
 const gagal = ref(false)
@@ -65,9 +66,9 @@ const handleCancelBooking = async () => {
   }
 
   try {
-    await cancelRegistration(route.params.id as string, accessToken)
+    const participant = await cancelRegistration(route.params.id as string, accessToken)
+    emit('cancelled', participant)
     emit('close')
-    router.replace('/my-events')
   } catch (error: any) {
     gagal.value = true
     message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'

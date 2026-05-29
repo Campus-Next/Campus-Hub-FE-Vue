@@ -33,15 +33,13 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => isAdmin()
-        ? import('../pages/admin/HomePage.vue')
-        : import('../pages/user/HomePage.vue'),
+      component: () => import('../pages/HomeShell.vue'),
     },
     {
       path: '/cart',
       name: 'cart',
       component: () => import('../pages/user/Cart.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresUser: true },
     },
     {
       path: '/events/upload',
@@ -73,12 +71,6 @@ const router = createRouter({
       path: '/my-events/:id/view',
       name: 'my-event-status',
       component: () => import('../pages/user/MyEventStatusPage.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/events/:id/preview',
-      name: 'preview-event',
-      component: () => import('../pages/user/PreviewEvent.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -127,6 +119,10 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.requiresAdmin && !isAdmin()) {
+    return '/'
+  }
+
+  if (to.meta.requiresUser && isAdmin()) {
     return '/'
   }
 

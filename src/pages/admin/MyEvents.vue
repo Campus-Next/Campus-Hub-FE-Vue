@@ -86,22 +86,23 @@ import { getEventImageUrl } from '../../utils/helpers'
 
 const router = useRouter()
 const events = ref<any[]>([])
-const selectedEventId = ref<string | null>(null)
+const selectedEventId = ref<string>('')
 const error = ref<string | null>(null)
 const isLoading = ref(true)
 const showConfirm = ref(false)
 
 const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange, sortedEvents } = useEventFilters(events, 'title', 'updated_at')
 
-const handleDelete = (e: Event, id: string) => {
+const handleDelete = (e: Event, id: string | number) => {
   e.stopPropagation()
-  selectedEventId.value = id
+  selectedEventId.value = String(id)
   showConfirm.value = true
 }
 
 const onSuccess = () => {
+  events.value = events.value.filter(event => String(event.id) !== selectedEventId.value)
   showConfirm.value = false
-  window.location.reload()
+  selectedEventId.value = ''
 }
 
 const onBack = () => {

@@ -183,20 +183,19 @@ export const enrollEvent = (eventId: number | string, token: string) =>
   })
 
 export const cancelRegistration = (eventId: number | string, token: string) =>
-  request<{ message: string }>(
+  request<EventParticipant>(
     `/events/${eventId}/enroll`,
     {
       method: 'DELETE',
       headers: buildHeaders(token),
     },
-    { unwrap: false },
   )
 
 export const fetchMyEvents = (token: string) =>
   request<EventParticipant[]>('/my-events', { method: 'GET', headers: buildHeaders(token) })
 
 export const fetchUniqueCode = (eventId: number | string, token: string) =>
-  request<{ unique_code: string | null; status: string }>(`/events/${eventId}/my-code`, {
+  request<{ unique_code: string | null; status: ParticipantStatus }>(`/events/${eventId}/my-code`, {
     method: 'GET',
     headers: buildHeaders(token),
   })
@@ -212,18 +211,6 @@ export const checkInParticipant = (eventId: number | string, code: string, token
     method: 'POST',
     headers: buildHeaders(token, true),
     body: JSON.stringify({ code }),
-  })
-
-export const updateParticipantStatus = (
-  eventId: number | string,
-  participantId: number | string,
-  payload: { status: ParticipantStatus },
-  token: string,
-) =>
-  request<EventParticipant>(`/events/${eventId}/participants/${participantId}`, {
-    method: 'PATCH',
-    headers: buildHeaders(token, true),
-    body: JSON.stringify(payload),
   })
 
 // ===== Event links =====

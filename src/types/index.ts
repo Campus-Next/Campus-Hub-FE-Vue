@@ -66,7 +66,7 @@ export interface Event {
   images?: EventImage[]
 }
 
-export type ParticipantStatus = 'registered' | 'attended' | 'absent'
+export type ParticipantStatus = 'registered' | 'attended' | 'absent' | 'cancelled'
 
 export interface EventParticipant {
   id: number
@@ -74,6 +74,7 @@ export interface EventParticipant {
   user_id: number
   status: ParticipantStatus
   unique_code?: string | null
+  cancelled_at?: string | null
   event?: Event
   user?: User
   created_at?: string

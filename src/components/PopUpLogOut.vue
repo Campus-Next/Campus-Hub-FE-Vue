@@ -92,17 +92,20 @@ const triggerClose = () => {
 
 const handleLogout = async () => {
   isProcessing.value = true
-  try {
-    const result = await logout(getToken() || '')
-    data.value = result
-
+  const redirectToPublicHome = () => {
     clearAuthSession()
+    router.replace({ path: '/', query: { view: 'public' } })
+  }
 
-    setTimeout(() => {
-      router.replace('/')
-    }, 200)
+  try {
+    const token = getToken()
+    if (token) {
+      const result = await logout(token)
+      data.value = result
+    }
+    setTimeout(redirectToPublicHome, 200)
   } catch (error) {
-    gagal.value = true
+    redirectToPublicHome()
   } finally {
     setTimeout(() => {
       isProcessing.value = false

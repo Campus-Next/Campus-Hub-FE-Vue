@@ -71,6 +71,12 @@
               >
                 Absent ({{ absentCount }})
               </li>
+              <li
+                :class="['cursor-pointer', statusFilter === 'Cancelled' ? 'font-bold underline' : '']"
+                @click="handleStatusFilter('Cancelled')"
+              >
+                Cancelled ({{ cancelledCount }})
+              </li>
             </ul>
           </div>
 
@@ -168,7 +174,7 @@ const sortedEvents = computed(() => {
 })
 
 const counts = computed(() => {
-  const acc = { all: 0, registered: 0, attended: 0, absent: 0 } as Record<string, number>
+  const acc = { all: 0, registered: 0, attended: 0, absent: 0, cancelled: 0 } as Record<string, number>
   for (const p of events.value) {
     acc.all++
     const key = p.status?.toLowerCase()
@@ -181,10 +187,11 @@ const allCount = computed(() => counts.value.all)
 const registeredCount = computed(() => counts.value.registered)
 const attendedCount = computed(() => counts.value.attended)
 const absentCount = computed(() => counts.value.absent)
+const cancelledCount = computed(() => counts.value.cancelled)
 
 onMounted(async () => {
   const activeTab = (route as any).state?.activeTab
-  if (['All', 'Registered', 'Attended', 'Absent'].includes(activeTab)) {
+  if (['All', 'Registered', 'Attended', 'Absent', 'Cancelled'].includes(activeTab)) {
     statusFilter.value = activeTab as string
   }
 
