@@ -372,7 +372,14 @@ import PopUpGagal from '../../components/PopUpGagal.vue'
 import StepIndicator from '../../components/StepIndicator.vue'
 import EventFormLayout from '../../components/EventFormLayout.vue'
 import EventPreview from '../../components/EventPreview.vue'
-import { fetchCategories, fetchEventDetails, updateEvent } from '../../services/api'
+import {
+  createEventLink,
+  deleteEventLink,
+  fetchCategories,
+  fetchEvent,
+  updateEvent,
+  updateEventLink,
+} from '../../services/api'
 import { useEventForm } from '../../composables/useEventForm'
 import { useAuthCheck } from '../../composables/useAuthCheck'
 import type { Category } from '../../types'
@@ -400,10 +407,12 @@ const {
   registration_deadline,
   location,
   isOffline,
+  imagePreviewUrl,
   isFormValid,
   isSecondStepValid,
   isFormComplete,
   isLinksValid,
+  removedLinkIds,
   eventStartDateTime,
   dateErrors,
   getFormData,

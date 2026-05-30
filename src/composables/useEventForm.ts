@@ -165,6 +165,34 @@ export function useEventForm(initialData?: any) {
       }))
       .filter(link => link.title && link.url)
 
+  const cleanupImagePreview = () => {
+    if (imagePreviewUrl.value?.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl.value)
+    }
+  }
+
+  const clearImage = () => {
+    cleanupImagePreview()
+    imageFile.value = null
+    imagePreviewUrl.value = null
+  }
+
+  const handleImageSelect = (file: File) => {
+    cleanupImagePreview()
+    imageFile.value = file
+    imagePreviewUrl.value = URL.createObjectURL(file)
+  }
+
+  const addEventLink = () => {
+    eventLinks.value.push({ title: '', url: '' })
+  }
+
+  const removeEventLink = (index: number) => {
+    const link = eventLinks.value[index]
+    if (link?.id) removedLinkIds.value.push(link.id)
+    eventLinks.value.splice(index, 1)
+  }
+
   // --- Populate from API response ---
 
   const setFormData = (data: any) => {
@@ -186,12 +214,15 @@ export function useEventForm(initialData?: any) {
     max_participants.value = data.max_participants || data.slot || ''
     location.value = data.location || ''
     isOffline.value = data.location && data.location !== 'Online'
+    imagePreviewUrl.value = resolveStorageUrl(data.image_url || data.image?.path || '')
+    eventLinks.value = Array.isArray(data.event_links) ? data.event_links : []
   }
 
   return {
     title,
     description,
     category_id,
+    imagePreviewUrl,
     start_date_date,
     start_date_time,
     end_date_date,
@@ -205,6 +236,7 @@ export function useEventForm(initialData?: any) {
     isSecondStepValid,
     isFormComplete,
     isLinksValid,
+    removedLinkIds,
     eventStartDateTime,
     dateErrors,
     getFormData,
