@@ -395,7 +395,7 @@ import {
   createEventLink,
   deleteEventLink,
   fetchCategories,
-  fetchEventDetails,
+  fetchEvent,
   fetchMyOrganizedEvents,
   updateEvent,
   updateEventLink,
@@ -519,7 +519,7 @@ onMounted(async () => {
     setFormData((route.state as any).data)
   } else {
     try {
-      const data = await fetchEventDetails(Number(route.params.id))
+      const data = await fetchEvent(Number(route.params.id))
       setFormData(data)
     } catch (error) {
       popupMessage.value  = 'Terjadi kesalahan saat memuat data event. Silakan coba lagi.'

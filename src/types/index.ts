@@ -85,7 +85,6 @@ export interface Cart {
   id: number
   user_id: number
   event_id: number
-  quantity: number
   event?: Event
   created_at?: string
   updated_at?: string

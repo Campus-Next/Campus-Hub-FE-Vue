@@ -20,7 +20,7 @@ export function useCart() {
     const byEvent = new Map<number, Cart>()
     for (const item of carts) {
       if (!byEvent.has(item.event_id)) {
-        byEvent.set(item.event_id, { ...item, quantity: 1 })
+        byEvent.set(item.event_id, { ...item })
       }
     }
     return Array.from(byEvent.values())
@@ -54,9 +54,9 @@ export function useCart() {
     const alreadyInCart = items.value.find(item => item.event_id === eventId)
     if (alreadyInCart) return alreadyInCart
 
-    const cart = await addToCart({ event_id: eventId, quantity: 1 }, token)
+    const cart = await addToCart({ event_id: eventId }, token)
     const existing = items.value.findIndex(i => i.event_id === cart.event_id)
-    if (existing >= 0) items.value[existing] = { ...cart, quantity: 1 }
+    if (existing >= 0) items.value[existing] = { ...cart }
     else items.value.push(cart)
     return cart
   }
