@@ -54,6 +54,21 @@
       <h1 v-animate class="flex justify-center items-center font-semibold text-[32px]">Kategori</h1>
       <div v-animate>
         <ul class="flex gap-x-[64px] justify-center flex-wrap">
+          <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
+            <button
+              type="button"
+              class="flex flex-col items-center gap-2 text-[#003266] font-medium"
+              @click="selectCategory(null)"
+            >
+              <div
+                class="w-20 h-20 rounded-full flex items-center justify-center"
+                :class="selectedCategoryId === null ? 'bg-[#027FFF]' : 'bg-[#EAF4FF]'"
+              >
+                <i :class="['ri-apps-2-line text-3xl', selectedCategoryId === null ? 'text-white' : 'text-[#027FFF]']" />
+              </div>
+              <span class="text-sm">Semua</span>
+            </button>
+          </li>
           <li
             v-for="category in categories"
             :key="category.id"
@@ -62,10 +77,13 @@
             <button
               type="button"
               class="flex flex-col items-center gap-2 text-[#003266] font-medium"
-              @click="scrollToAcara"
+              @click="selectCategory(category.id)"
             >
-              <div class="w-20 h-20 rounded-full bg-[#EAF4FF] flex items-center justify-center">
-                <i :class="[getCategoryIcon(category.name), 'text-3xl text-[#027FFF]']" />
+              <div
+                class="w-20 h-20 rounded-full flex items-center justify-center"
+                :class="selectedCategoryId === category.id ? 'bg-[#027FFF]' : 'bg-[#EAF4FF]'"
+              >
+                <i :class="[getCategoryIcon(category.name), 'text-3xl', selectedCategoryId === category.id ? 'text-white' : 'text-[#027FFF]']" />
               </div>
               <span class="text-sm">{{ category.name }}</span>
             </button>
@@ -82,13 +100,23 @@
         Jelajahi Acara Unggulan
       </h1>
 
-      <div v-animate class="flex flex-wrap justify-center mb-[80px] relative z-10 w-full max-w-[1320px]">
+      <div v-animate class="flex flex-col items-center mb-[80px] relative z-10 w-full max-w-[1320px]">
+        <div v-if="!isLoading && !error" class="w-full flex justify-center px-6 mb-12">
+          <SearchSort
+            v-model="searchQuery"
+            :sort-option="sortOption"
+            :is-open="isDropdownOpen"
+            placeholder="Cari acara..."
+            @toggle="toggleDropdown"
+            @sort="handleSortChange"
+          />
+        </div>
         <div v-if="isLoading" class="flex items-center justify-center py-20 w-full">
           <div class="loader w-16 h-16 border-4 border-[#027FFF] border-t-transparent rounded-full animate-spin"></div>
           <p class="ml-4 text-lg font-medium">Loading...</p>
         </div>
         <p v-else-if="error" class="text-red-500 py-20">{{ error }}</p>
-        <CardPage v-else :events="events" compact />
+        <CardPage v-else :events="sortedEvents" compact />
       </div>
 
       <img
@@ -109,12 +137,25 @@
 import CardPage from '../../components/CardPage.vue'
 import Footer from '../../components/Footer.vue'
 import Navbar from '../../components/Navbar.vue'
+import SearchSort from '../../components/SearchSort.vue'
 import { useCountUp } from '../../composables/useCountUp'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useEvents } from '../../composables/useEvents'
+import { useEventFilters } from '../../composables/useFilters'
 import { getCategoryIcon } from '../../utils/categoryIcons'
 
 const { events, categories, isLoading, error } = useEvents(undefined, { autoLoad: true })
+
+const selectedCategoryId = ref<number | null>(null)
+
+const categoryFilteredEvents = computed(() =>
+  selectedCategoryId.value == null
+    ? events.value
+    : events.value.filter(event => event.category_id === selectedCategoryId.value),
+)
+
+const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange, sortedEvents } =
+  useEventFilters(categoryFilteredEvents, 'title', 'start_date')
 
 const trendingCount = computed(() => events.value.length)
 const categoryCount = computed(() => categories.value.length)
@@ -125,5 +166,10 @@ const animatedCategoryCount = useCountUp(categoryCount, 2000)
 const scrollToAcara = () => {
   const element = document.getElementById('acara')
   element?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const selectCategory = (id: number | null) => {
+  selectedCategoryId.value = id
+  scrollToAcara()
 }
 </script>
