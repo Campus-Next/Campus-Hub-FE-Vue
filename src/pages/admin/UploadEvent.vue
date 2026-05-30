@@ -400,7 +400,6 @@ const {
   registration_deadline,
   location,
   isOffline,
-  category_id,
   isFormValid,
   isSecondStepValid,
   isFormComplete,
