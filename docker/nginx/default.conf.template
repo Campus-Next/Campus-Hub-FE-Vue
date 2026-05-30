@@ -1,0 +1,47 @@
+server {
+    listen 80 default_server;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Compress text assets.
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+
+    # Long-cache fingerprinted build assets.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # Proxy API + storage to the backend (same-origin from the browser).
+    # Use a variable + Docker's embedded DNS resolver so the upstream is
+    # resolved lazily at request time; nginx then starts even if the backend
+    # container isn't up yet.
+    location /api/ {
+        resolver 127.0.0.11 ipv6=off valid=30s;
+        set $backend "${BACKEND_URL}";
+        proxy_pass $backend$request_uri;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /storage/ {
+        resolver 127.0.0.11 ipv6=off valid=30s;
+        set $backend "${BACKEND_URL}";
+        proxy_pass $backend$request_uri;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # SPA fallback.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

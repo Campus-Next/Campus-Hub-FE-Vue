@@ -32,7 +32,7 @@
 
           <div class="event-list flex flex-col gap-6 px-4 sm:px-6 lg:px-20 pt-8 pb-8">
             <div
-              v-for="(event, index) in sortedEvents"
+              v-for="(event, index) in items"
               :key="`${event.id}-${index}`"
               class="event-box p-4 border border-customBlue rounded-2xl shadow-md hover:shadow-lg transition duration-300 px-4 py-2 flex justify-between items-center animate-slideIn opacity-0"
               :style="{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }"
@@ -56,10 +56,12 @@
                 </a>
               </div>
             </div>
-            <div v-if="sortedEvents.length === 0" class="flex justify-center items-center py-8">
+            <div v-if="items.length === 0" class="flex justify-center items-center py-8">
               <div class="text-gray-500 text-lg">No events found.</div>
             </div>
           </div>
+
+          <Pagination :current-page="currentPage" :max-page="maxPage" @page-change="setPage" />
         </div>
       </div>
 
@@ -78,31 +80,48 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
+import Pagination from '../../components/Pagination.vue'
 import PopUpDeleteEvent from '../../components/PopUpDeleteEvent.vue'
 import SearchSort from '../../components/SearchSort.vue'
-import { fetchMyOrganizedEvents } from '../../services/api'
-import { useEventFilters } from '../../composables/useFilters'
+import { fetchMyOrganizedEventsPage } from '../../services/api'
+import { useServerList } from '../../composables/useServerList'
 import { getEventImageUrl } from '../../utils/helpers'
+import type { Event } from '../../types'
 
 const router = useRouter()
-const events = ref<any[]>([])
 const selectedEventId = ref<string>('')
-const error = ref<string | null>(null)
-const isLoading = ref(true)
 const showConfirm = ref(false)
 
-const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange, sortedEvents } = useEventFilters(events, 'title', 'updated_at')
+const token = localStorage.getItem('token')
 
-const handleDelete = (e: Event, id: string | number) => {
+const {
+  items,
+  isLoading,
+  error,
+  searchQuery,
+  sortOption,
+  isDropdownOpen,
+  currentPage,
+  maxPage,
+  toggleDropdown,
+  handleSortChange,
+  setPage,
+  load,
+} = useServerList<Event>(
+  query => fetchMyOrganizedEventsPage(token as string, query),
+  { autoLoad: false },
+)
+
+const handleDelete = (e: MouseEvent, id: string | number) => {
   e.stopPropagation()
   selectedEventId.value = String(id)
   showConfirm.value = true
 }
 
 const onSuccess = () => {
-  events.value = events.value.filter(event => String(event.id) !== selectedEventId.value)
   showConfirm.value = false
   selectedEventId.value = ''
+  load()
 }
 
 const onBack = () => {
@@ -113,25 +132,14 @@ const onFailure = () => {
   showConfirm.value = false
 }
 
-onMounted(async () => {
+onMounted(() => {
   window.scrollTo(0, 0)
 
-  const token = localStorage.getItem('token')
   if (!token) {
     router.replace('/welcome?redirect=/my-events')
     return
   }
 
-  try {
-    const data = await fetchMyOrganizedEvents(token)
-    events.value = data
-  } catch (err: any) {
-    error.value = err.data || 'Koneksi Timeout. Silahkan Coba Lagi'
-    if (err.status === 403) {
-      router.push('/my-events')
-    }
-  } finally {
-    isLoading.value = false
-  }
+  load()
 })
 </script>

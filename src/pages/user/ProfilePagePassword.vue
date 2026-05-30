@@ -18,23 +18,14 @@
             <div class="profile flex flex-col lg:w-10/12 py-10">
               <div class="edit-password flex flex-col w-full gap-4 lg:mb-0">
                 <form @submit.prevent="handleSubmit">
-                  <div class="form lg:flex lg:items-center gap-4 lg:w-full pl-0 lg:mb-12">
-                    <div class="form-label flex flex-col gap-6 lg:gap-20 w-full lg:w-4/12">
-                      <label for="current-password" class="font-semibold text-[16px] lg:text-[20px] hidden sm:block">
+                  <div class="form flex flex-col gap-6 lg:gap-10 lg:w-full pl-0 lg:mb-12">
+                    <div class="lg:flex lg:items-center gap-4 w-full">
+                      <label for="currentpassword" class="font-semibold text-[16px] lg:text-[20px] hidden lg:block lg:w-4/12">
                         Password Saat Ini
                       </label>
-                      <label for="new-password" class="font-semibold text-[16px] lg:text-[20px] hidden sm:block">
-                        Password Baru
-                      </label>
-                      <label for="password-confimation" class="font-semibold text-[16px] lg:text-[20px] hidden sm:block">
-                        Konfirmasi Password
-                      </label>
-                    </div>
-
-                    <div class="form-input flex flex-col gap-4 sm:gap-20 w-full sm:w-8/12 lg:w-10/12">
-                      <div class="w-full flex flex-col relative">
-                        <div class="flex flex-col sm:flex-col sm:items-start sm:gap-2">
-                          <label for="currentpassword" class="sm:block lg:hidden font-semibold text-[16px]">Password Saat Ini</label>
+                      <div class="w-full lg:w-8/12 flex flex-col relative">
+                        <div class="flex flex-col sm:items-start sm:gap-2">
+                          <label for="currentpassword" class="lg:hidden font-semibold text-[16px]">Password Saat Ini</label>
                           <div class="flex py-2 w-full">
                             <input
                               :type="showCurrentPassword ? 'text' : 'password'"
@@ -53,10 +44,15 @@
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div class="w-full flex flex-col relative">
-                        <div class="flex flex-col sm:flex-col sm:items-start sm:gap-2">
-                          <label for="newpassword" class="sm:block lg:hidden font-semibold text-[16px]">Password Baru</label>
+                    <div class="lg:flex lg:items-center gap-4 w-full">
+                      <label for="newpassword" class="font-semibold text-[16px] lg:text-[20px] hidden lg:block lg:w-4/12">
+                        Password Baru
+                      </label>
+                      <div class="w-full lg:w-8/12 flex flex-col relative">
+                        <div class="flex flex-col sm:items-start sm:gap-2">
+                          <label for="newpassword" class="lg:hidden font-semibold text-[16px]">Password Baru</label>
                           <div class="flex py-2 w-full">
                             <input
                               :type="showNewPassword ? 'text' : 'password'"
@@ -82,10 +78,15 @@
                           {{ passwordError }}
                         </div>
                       </div>
+                    </div>
 
-                      <div class="w-full flex flex-col relative">
-                        <div class="flex flex-col sm:flex-col sm:items-start sm:gap-2">
-                          <label for="phone" class="sm:block lg:hidden font-semibold text-[16px]">Konfirmasi Password</label>
+                    <div class="lg:flex lg:items-center gap-4 w-full">
+                      <label for="passwordconfirmation" class="font-semibold text-[16px] lg:text-[20px] hidden lg:block lg:w-4/12">
+                        Konfirmasi Password
+                      </label>
+                      <div class="w-full lg:w-8/12 flex flex-col relative">
+                        <div class="flex flex-col sm:items-start sm:gap-2">
+                          <label for="passwordconfirmation" class="lg:hidden font-semibold text-[16px]">Konfirmasi Password</label>
                           <div class="flex py-2 w-full">
                             <input
                               :type="showConfirmationPassword ? 'text' : 'password'"
