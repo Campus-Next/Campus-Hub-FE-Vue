@@ -29,11 +29,11 @@
 
           <FilterTabs
             :tabs="[
-              { value: 'All', label: 'All', count: statusCounts.all },
-              { value: 'Registered', label: 'Registered', count: statusCounts.registered },
-              { value: 'Attended', label: 'Attended', count: statusCounts.attended },
-              { value: 'Absent', label: 'Absent', count: statusCounts.absent },
-              { value: 'Cancelled', label: 'Cancelled', count: statusCounts.cancelled }
+              { value: 'All', label: 'All', count: counts?.all ?? 0 },
+              { value: 'Registered', label: 'Registered', count: counts?.registered ?? 0 },
+              { value: 'Attended', label: 'Attended', count: counts?.attended ?? 0 },
+              { value: 'Absent', label: 'Absent', count: counts?.absent ?? 0 },
+              { value: 'Cancelled', label: 'Cancelled', count: counts?.cancelled ?? 0 }
             ]"
             :active-tab="statusFilter"
             @change="handleStatusFilter"
@@ -41,7 +41,7 @@
 
           <div class="event-list flex flex-col gap-6 px-4 sm:px-6 lg:px-20 py-2">
             <div
-              v-for="(participant, index) in sortedEvents"
+              v-for="(participant, index) in items"
               :key="`${participant.id}-${statusFilter}-${index}`"
               class="event-box p-4 border border-customBlue rounded-2xl shadow-md hover:shadow-lg transition duration-300 px-4 py-2 flex justify-between items-center animate-slideIn opacity-0"
               :style="{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }"
@@ -61,8 +61,10 @@
                 </div>
               </div>
             </div>
-            <div v-if="sortedEvents.length === 0">No participants found.</div>
+            <div v-if="items.length === 0">No participants found.</div>
           </div>
+
+          <Pagination :current-page="currentPage" :max-page="maxPage" @page-change="setPage" />
         </div>
       </div>
     </div>
@@ -70,59 +72,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import FilterTabs from '../../components/FilterTabs.vue'
-import { fetchEventParticipants, fetchMyOrganizedEvents } from '../../services/api'
+import Pagination from '../../components/Pagination.vue'
+import { fetchEventParticipantsPage, fetchMyOrganizedEvents } from '../../services/api'
 import { useAuthCheck } from '../../composables/useAuthCheck'
-import { useStatusFilter } from '../../composables/useFilters'
+import { useServerList } from '../../composables/useServerList'
 import type { EventParticipant } from '../../types'
 
 const router = useRouter()
 const route = useRoute()
-const events = ref<EventParticipant[]>([])
-const isLoading = ref(true)
-const searchQuery = ref('')
-const sortOption = ref('date')
-const isDropdownOpen = ref(false)
 
 useAuthCheck(true)
 
-const { statusFilter, handleStatusFilter, filteredByStatus, statusCounts } = useStatusFilter<EventParticipant>(events)
+const token = localStorage.getItem('token')
+const eventId = route.params.id as string
 
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
-
-const handleSortChange = (option: string) => {
-  sortOption.value = option
-  isDropdownOpen.value = false
-}
-
-const sortedEvents = computed(() => {
-  const q = searchQuery.value.toLowerCase()
-  const filtered = filteredByStatus.value.filter(p =>
-    (p.user?.name || '').toLowerCase().includes(q),
-  )
-  const sorted = [...filtered]
-  if (sortOption.value === 'date') {
-    return sorted.sort(
-      (a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime(),
-    )
-  }
-  if (sortOption.value === 'title') {
-    return sorted.sort((a, b) => (a.user?.name || '').localeCompare(b.user?.name || ''))
-  }
-  return sorted
-})
+const {
+  items,
+  isLoading,
+  searchQuery,
+  sortOption,
+  statusFilter,
+  isDropdownOpen,
+  currentPage,
+  maxPage,
+  counts,
+  toggleDropdown,
+  handleSortChange,
+  handleStatusFilter,
+  setPage,
+  load,
+} = useServerList<EventParticipant>(
+  // SearchSort emits 'date' | 'title'; the participants endpoint sorts by
+  // 'date' | 'name' (A-Z = participant name), so translate here.
+  query => fetchEventParticipantsPage(eventId, token as string, {
+    ...query,
+    sort: query.sort === 'title' ? 'name' : query.sort,
+  }),
+  { autoLoad: false },
+)
 
 watch(
   () => (route as any).state?.activeTab,
   (activeTab) => {
     if (['All', 'Registered', 'Attended', 'Absent', 'Cancelled'].includes(activeTab)) {
-      statusFilter.value = activeTab as any
+      statusFilter.value = activeTab as string
     }
   },
 )
@@ -130,23 +128,19 @@ watch(
 onMounted(async () => {
   window.scrollTo(0, 0)
 
-  const token = localStorage.getItem('token')
   if (!token) return
 
   try {
     const organizedEvents = await fetchMyOrganizedEvents(token)
-    const ownsEvent = organizedEvents.some(event => String(event.id) === String(route.params.id))
+    const ownsEvent = organizedEvents.some(event => String(event.id) === eventId)
     if (!ownsEvent) {
       router.replace('/my-events')
       return
     }
 
-    const data = await fetchEventParticipants(route.params.id as string, token)
-    events.value = data
+    load()
   } catch (error) {
     console.error('Error fetching events:', error)
-  } finally {
-    isLoading.value = false
   }
 })
 </script>

@@ -82,8 +82,11 @@
               ]"
               @click="handleCategoryClick(category.id)"
             >
-              <div class="w-20 h-20 rounded-full bg-[#EAF4FF] flex items-center justify-center">
-                <i :class="[getCategoryIcon(category.name), 'text-3xl text-[#027FFF]']" />
+              <div
+                class="w-20 h-20 rounded-full flex items-center justify-center"
+                :class="selectedCategoryId === category.id ? 'bg-[#027FFF]' : 'bg-[#EAF4FF]'"
+              >
+                <i :class="[getCategoryIcon(category.name), 'text-3xl', selectedCategoryId === category.id ? 'text-white' : 'text-[#027FFF]']" />
               </div>
               <span class="text-sm">{{ category.name }}</span>
             </button>
@@ -100,13 +103,31 @@
         Jelajahi Acara Unggulan
       </h1>
 
-      <div v-animate class="flex flex-wrap justify-center mb-[80px] relative z-10 w-full max-w-[1320px]">
+      <div v-animate class="flex flex-col items-center mb-[80px] relative z-10 w-full max-w-[1320px]">
+        <div v-if="!isLoading && !error" class="w-full flex justify-center px-6 mb-12">
+          <SearchSort
+            v-model="searchQuery"
+            :sort-option="sortOption"
+            :is-open="isDropdownOpen"
+            placeholder="Cari acara..."
+            @toggle="toggleDropdown"
+            @sort="handleSortChange"
+          />
+        </div>
         <div v-if="isLoading" class="flex items-center justify-center py-20 w-full">
           <div class="loader w-16 h-16 border-4 border-[#027FFF] border-t-transparent rounded-full animate-spin"></div>
           <p class="ml-4 text-lg font-medium">Loading...</p>
         </div>
         <p v-else-if="error" class="text-red-500 py-20">{{ error }}</p>
-        <CardPage v-else :events="events" compact />
+        <CardPage
+          v-else
+          :events="items"
+          compact
+          server-paginated
+          :current-page="currentPage"
+          :max-page="maxPage"
+          @page-change="setPage"
+        />
       </div>
 
       <img
@@ -127,18 +148,36 @@
 import CardPage from '../../components/CardPage.vue'
 import Footer from '../../components/Footer.vue'
 import Navbar from '../../components/Navbar.vue'
+import SearchSort from '../../components/SearchSort.vue'
 import { useCountUp } from '../../composables/useCountUp'
 import { computed, ref } from 'vue'
 import { useEvents } from '../../composables/useEvents'
 import { getCategoryIcon } from '../../utils/categoryIcons'
+import type { Category, Event } from '../../types'
+
+const {
+  items,
+  isLoading,
+  error,
+  searchQuery,
+  sortOption,
+  isDropdownOpen,
+  categoryId: selectedCategoryId,
+  currentPage,
+  maxPage,
+  total,
+  toggleDropdown,
+  handleSortChange,
+  setCategory,
+  setPage,
+} = useServerList<Event>(query => fetchEventsPage(query), { perPage: 12 })
 
 const { events, categories, isLoading, error, loadEvents } = useEvents(undefined, { autoLoad: true })
 const selectedCategoryId = ref<number | null>(null)
 
-const trendingCount = computed(() => events.value.length)
 const categoryCount = computed(() => categories.value.length)
 
-const animatedTrendingCount = useCountUp(trendingCount, 2000)
+const animatedTrendingCount = useCountUp(total, 2000)
 const animatedCategoryCount = useCountUp(categoryCount, 2000)
 
 const scrollToAcara = () => {
