@@ -54,7 +54,9 @@ export function useEventForm(initialData?: any) {
   // Image upload
   const imageFile = ref<File | null>(null)
   const imagePreviewUrl = ref<string | null>(null)
-  const eventLinks = ref<EventLinkForm[]>(initialData?.event_links || [])
+  const eventLinks = ref<EventLinkForm[]>(
+    Array.isArray(initialData?.event_links) ? initialData.event_links : [],
+  )
   const removedLinkIds = ref<number[]>([])
 
   const eventStartDateTime = computed(() =>
@@ -232,6 +234,8 @@ export function useEventForm(initialData?: any) {
     registration_deadline,
     location,
     isOffline,
+    eventLinks,
+    eventLinkErrors,
     isFormValid,
     isSecondStepValid,
     isFormComplete,

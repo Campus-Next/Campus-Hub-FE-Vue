@@ -136,40 +136,66 @@
                   </select>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Waktu Mulai *</label>
-                    <input
-                      v-model="start_date_date"
-                      type="date"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                    <input
-                      v-model="start_date_time"
-                      type="time"
-                      :class="`${inputClasses} w-full cursor-pointer`"
-                      required
-                    >
+                <div class="space-y-2">
+                  <label :class="labelClasses">Waktu Mulai *</label>
+                  <div class="grid md:grid-cols-2 gap-4">
+                    <div class="relative">
+                      <input
+                        v-model="start_date_date"
+                        type="date"
+                        :class="`${inputClasses} w-full`"
+                        required
+                      >
+                    </div>
+                    <div class="relative">
+                      <input
+                        ref="startTimeInput"
+                        v-model="start_date_time"
+                        type="time"
+                        :class="`${inputClasses} w-full pr-12 cursor-pointer`"
+                        required
+                      >
+                      <button
+                        type="button"
+                        class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors"
+                        aria-label="Buka time picker waktu mulai"
+                        @click="openPicker(startTimeInput)"
+                      >
+                        <i class="ri-time-line text-xl" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <!-- End Date & Time -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Waktu Berakhir *</label>
-                  <div class="grid grid-cols-2 gap-4">
-                    <input
-                      v-model="end_date_date"
-                      type="date"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                    <input
-                      v-model="end_date_time"
-                      type="time"
-                      :class="`${inputClasses} w-full cursor-pointer`"
-                      required
-                    >
+                  <div class="grid md:grid-cols-2 gap-4">
+                    <div class="relative">
+                      <input
+                        v-model="end_date_date"
+                        type="date"
+                        :class="`${inputClasses} w-full`"
+                        required
+                      >
+                    </div>
+                    <div class="relative">
+                      <input
+                        ref="endTimeInput"
+                        v-model="end_date_time"
+                        type="time"
+                        :class="`${inputClasses} w-full pr-12 cursor-pointer`"
+                        required
+                      >
+                      <button
+                        type="button"
+                        class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-blue-500 transition-colors"
+                        aria-label="Buka time picker waktu berakhir"
+                        @click="openPicker(endTimeInput)"
+                      >
+                        <i class="ri-time-line text-xl" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -391,6 +417,8 @@ const isPopupVisible = ref(false)
 const popupMessage = ref('')
 const isLoading = ref(false)
 const categories = ref<Category[]>([])
+const startTimeInput = ref<HTMLInputElement | null>(null)
+const endTimeInput = ref<HTMLInputElement | null>(null)
 
 useAuthCheck(true)
 
@@ -408,6 +436,8 @@ const {
   location,
   isOffline,
   imagePreviewUrl,
+  eventLinks,
+  eventLinkErrors,
   isFormValid,
   isSecondStepValid,
   isFormComplete,
@@ -435,6 +465,16 @@ const canGoNext = computed(() => step.value === 1 ? isFormValid.value : isFormCo
 const setStep = (newStep: number) => { step.value = newStep }
 const handleNext = () => { if (step.value < 3) step.value++ }
 const handleBack = () => { if (step.value > 1) step.value-- }
+
+const openPicker = (input: HTMLInputElement | null) => {
+  if (!input) return
+  if (typeof input.showPicker === 'function') {
+    input.showPicker()
+    return
+  }
+  input.focus()
+  input.click()
+}
 
 // File handlers
 const onFileChange = (e: Event) => {
