@@ -1,5 +1,4 @@
 import type {
-  ApiEnvelope,
   Cart,
   Category,
   CheckoutResult,
@@ -90,9 +89,6 @@ export const logout = (token: string) =>
     },
     { unwrap: false },
   )
-
-export const fetchUserProfile = (token: string) =>
-  request<User>('/auth/me', { method: 'GET', headers: buildHeaders(token) })
 
 export const updateUserProfile = (payload: { name?: string; email?: string }, token: string) =>
   request<User>('/auth/me', {
@@ -215,9 +211,6 @@ export const checkInParticipant = (eventId: number | string, code: string, token
 
 // ===== Event links =====
 
-export const fetchEventLinks = (eventId: number | string, token?: string) =>
-  request<EventLink[]>(`/events/${eventId}/links`, { method: 'GET', headers: buildHeaders(token) })
-
 export const createEventLink = (
   eventId: number | string,
   payload: { title: string; url: string },
@@ -254,22 +247,11 @@ export const fetchCart = (token: string) =>
   request<Cart[]>('/carts', { method: 'GET', headers: buildHeaders(token) })
 
 export const addToCart = (
-  payload: { event_id: number; quantity?: number },
+  payload: { event_id: number },
   token: string,
 ) =>
   request<Cart>('/carts', {
     method: 'POST',
-    headers: buildHeaders(token, true),
-    body: JSON.stringify({ quantity: 1, ...payload }),
-  })
-
-export const updateCartItem = (
-  cartId: number | string,
-  payload: { quantity: number },
-  token: string,
-) =>
-  request<Cart>(`/carts/${cartId}`, {
-    method: 'PATCH',
     headers: buildHeaders(token, true),
     body: JSON.stringify(payload),
   })
@@ -286,14 +268,3 @@ export const checkoutCart = (token: string) =>
     method: 'POST',
     headers: buildHeaders(token),
   })
-
-// ===== Backwards-compatibility shim =====
-
-export const registerEventWithToken = enrollEvent
-export const fetchEventDetails = fetchEvent
-export const fetchEventStatus = async (eventId: number | string, token: string) => {
-  const code = await fetchUniqueCode(eventId, token)
-  return { status: code.status }
-}
-
-export type { ApiEnvelope }

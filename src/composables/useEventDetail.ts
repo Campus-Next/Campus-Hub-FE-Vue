@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { fetchEvent, fetchEventStatus } from '../services/api'
+import { fetchEvent, fetchUniqueCode } from '../services/api'
 import type { Event, ParticipantStatus } from '../types'
 
 export function useEventDetail() {
@@ -45,7 +45,7 @@ export function useEventStatus() {
     error.value = null
 
     try {
-      const data = await fetchEventStatus(Number(eventId), token)
+      const data = await fetchUniqueCode(Number(eventId), token)
       status.value = data.status
     } catch (err: any) {
       error.value = err.message || 'Terjadi kesalahan saat memuat status'
