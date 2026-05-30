@@ -120,7 +120,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { fetchMyEvents } from '../../services/api'
+import { fetchMyRegisteredEvents } from '../../services/api'
 import Navbar from '../../components/Navbar.vue'
 import { getEventImageUrl } from '../../utils/helpers'
 
@@ -204,7 +204,7 @@ onMounted(async () => {
   }
 
   try {
-    const data = await fetchMyEvents(token)
+    const data = await fetchMyRegisteredEvents(token)
     events.value = data
   } catch (err: any) {
     if (err.status === 403) {

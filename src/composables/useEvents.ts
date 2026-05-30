@@ -50,11 +50,6 @@ export function useEvents(
     }
   }
 
-  const clearEvents = () => {
-    events.value = []
-    error.value = null
-  }
-
   if (options?.autoLoad !== false) {
     onMounted(() => {
       window.scrollTo(0, 0)
@@ -68,6 +63,5 @@ export function useEvents(
     isLoading,
     error,
     loadEvents,
-    clearEvents,
   }
 }

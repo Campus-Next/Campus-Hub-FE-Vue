@@ -21,10 +21,6 @@ export default {
           '0%': { transform: 'translateX(-100%)', opacity: '0' },
           '100%': { transform: 'translateX(0)', opacity: '1' },
         },
-        skeleton: {
-          '0%': { backgroundPosition: '200% 0' },
-          '100%': { backgroundPosition: '-200% 0' },
-        },
         slideUp: {
           '0%': { transform: 'translateY(50px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
@@ -36,7 +32,6 @@ export default {
       },
       animation: {
         slideIn: 'slideIn 0.5s ease-out',
-        skeleton: 'skeleton 1.5s infinite linear',
         slideUp: 'slideUp 0.8s ease-out',
         fadeIn: 'fadeIn 0.6s ease-out forwards',
       },

@@ -7,6 +7,31 @@ interface EventLinkForm {
   url: string
 }
 
+const combineDateAndTime = (date: string, time: string) => {
+  if (!date || !time) return ''
+  return `${date} ${time}:00`
+}
+
+const toBackendDateTime = (value: string) => {
+  if (!value) return ''
+  const normalized = value.replace('T', ' ')
+  return normalized.length === 16 ? `${normalized}:00` : normalized
+}
+
+const toDateTimeLocal = (value: string) => {
+  if (!value) return ''
+  const normalized = value.replace('T', ' ').slice(0, 16)
+  const [date, time = '00:00'] = normalized.split(' ')
+  return date ? `${date}T${time.slice(0, 5) || '00:00'}` : ''
+}
+
+const splitDateTime = (value: string) => {
+  const localValue = toDateTimeLocal(value)
+  if (!localValue) return { date: '', time: '' }
+  const [date, time] = localValue.split('T')
+  return { date: date || '', time: time || '' }
+}
+
 export function useEventForm(initialData?: any) {
   const title = ref(initialData?.title || '')
   const description = ref(initialData?.description || '')
@@ -31,6 +56,10 @@ export function useEventForm(initialData?: any) {
   const imagePreviewUrl = ref<string | null>(null)
   const eventLinks = ref<EventLinkForm[]>(initialData?.event_links || [])
   const removedLinkIds = ref<number[]>([])
+
+  const eventStartDateTime = computed(() =>
+    start_date_date.value && start_date_time.value ? `${start_date_date.value}T${start_date_time.value}` : '',
+  )
 
   // --- Validation ---
 
@@ -90,11 +119,10 @@ export function useEventForm(initialData?: any) {
       }
     }
 
-    // Backend rule: registration_deadline must be <= start_date
-    if (registration_deadline.value && start_date_date.value) {
-      if (registration_deadline.value > start_date_date.value) {
+    if (registration_deadline.value && eventStartDateTime.value) {
+      if (registration_deadline.value > eventStartDateTime.value) {
         errors.registration_deadline =
-          `Pendaftaran harus tutup paling lambat pada hari acara dimulai (${start_date_date.value}).`
+          `Pendaftaran harus tutup paling lambat saat acara dimulai (${eventStartDateTime.value}).`
       }
     }
 
@@ -114,16 +142,10 @@ export function useEventForm(initialData?: any) {
     formData.append('description', description.value)
     formData.append('category_id', String(category_id.value))
 
-    // Combine date + time into 'YYYY-MM-DD HH:MM:SS'
-    const combine = (date: string, time: string) => {
-      if (!date || !time) return ''
-      return `${date} ${time}:00`
-    }
-
-    formData.append('start_date', combine(start_date_date.value, start_date_time.value))
-    formData.append('end_date',   combine(end_date_date.value,   end_date_time.value))
-    formData.append('registration_open',     registration_open.value)
-    formData.append('registration_deadline', registration_deadline.value)
+    formData.append('start_date', combineDateAndTime(start_date_date.value, start_date_time.value))
+    formData.append('end_date',   combineDateAndTime(end_date_date.value,   end_date_time.value))
+    formData.append('registration_open',     toBackendDateTime(registration_open.value))
+    formData.append('registration_deadline', toBackendDateTime(registration_deadline.value))
     formData.append('max_participants', String(max_participants.value))
     formData.append('location', isOffline.value ? location.value : 'Online')
 
@@ -150,14 +172,6 @@ export function useEventForm(initialData?: any) {
     description.value = data.description || data.desc || ''
     category_id.value = data.category_id || ''
 
-    // Split 'YYYY-MM-DD HH:MM:SS' (or ISO) into date + time
-    const splitDateTime = (str: string) => {
-      if (!str) return { date: '', time: '' }
-      const normalized = str.replace('T', ' ').slice(0, 16) // 'YYYY-MM-DD HH:MM'
-      const [date, time] = normalized.split(' ')
-      return { date: date || '', time: time || '' }
-    }
-
     const start = splitDateTime(data.start_date || '')
     const end   = splitDateTime(data.end_date   || '')
 
@@ -166,8 +180,8 @@ export function useEventForm(initialData?: any) {
     end_date_date.value   = end.date
     end_date_time.value   = end.time
 
-    registration_open.value     = data.registration_open     ? data.registration_open.slice(0, 10)     : ''
-    registration_deadline.value = data.registration_deadline ? data.registration_deadline.slice(0, 10) : ''
+    registration_open.value     = toDateTimeLocal(data.registration_open || '')
+    registration_deadline.value = toDateTimeLocal(data.registration_deadline || '')
 
     max_participants.value = data.max_participants || data.slot || ''
 
@@ -192,18 +206,27 @@ export function useEventForm(initialData?: any) {
     removedLinkIds.value = []
   }
 
+  const revokeImagePreview = () => {
+    if (imagePreviewUrl.value && imagePreviewUrl.value.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl.value)
+    }
+  }
+
   // Handle file selection
   const handleImageSelect = (file: File) => {
+    revokeImagePreview()
     imageFile.value = file
     imagePreviewUrl.value = URL.createObjectURL(file)
   }
 
   const clearImage = () => {
-    if (imagePreviewUrl.value && imagePreviewUrl.value.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreviewUrl.value)
-    }
+    revokeImagePreview()
     imageFile.value = null
     imagePreviewUrl.value = null
+  }
+
+  const cleanupImagePreview = () => {
+    revokeImagePreview()
   }
 
   const addEventLink = () => {
@@ -239,12 +262,14 @@ export function useEventForm(initialData?: any) {
     isSecondStepValid,
     isFormComplete,
     isLinksValid,
+    eventStartDateTime,
     dateErrors,
     getFormData,
     getCleanEventLinks,
     setFormData,
     handleImageSelect,
     clearImage,
+    cleanupImagePreview,
     addEventLink,
     removeEventLink,
   }

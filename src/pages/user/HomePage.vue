@@ -65,7 +65,7 @@
               @click="scrollToAcara"
             >
               <div class="w-20 h-20 rounded-full bg-[#EAF4FF] flex items-center justify-center">
-                <i class="ri-calendar-event-line text-3xl text-[#027FFF]" />
+                <i :class="[getCategoryIcon(category.name), 'text-3xl text-[#027FFF]']" />
               </div>
               <span class="text-sm">{{ category.name }}</span>
             </button>
@@ -112,6 +112,7 @@ import Navbar from '../../components/Navbar.vue'
 import { useCountUp } from '../../composables/useCountUp'
 import { computed } from 'vue'
 import { useEvents } from '../../composables/useEvents'
+import { getCategoryIcon } from '../../utils/categoryIcons'
 
 const { events, categories, isLoading, error } = useEvents(undefined, { autoLoad: true })
 

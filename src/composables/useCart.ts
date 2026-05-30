@@ -48,9 +48,6 @@ export function useCart() {
 
   const add = async (eventId: number) => {
     const token = requireToken()
-    if (items.value.length === 0) {
-      items.value = normalizeItems(await fetchCart(token))
-    }
     const alreadyInCart = items.value.find(item => item.event_id === eventId)
     if (alreadyInCart) return alreadyInCart
 

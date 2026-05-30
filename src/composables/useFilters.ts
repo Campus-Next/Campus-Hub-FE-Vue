@@ -50,37 +50,6 @@ export function useEventFilters<T extends Record<string, any>>(
   }
 }
 
-export function useCategoryFilter<T extends { category_id?: number | null }>(events: any) {
-  const categoryFilter = ref<string | number>('All')
-
-  const handleCategoryFilter = (category: string | number) => {
-    categoryFilter.value = category
-  }
-
-  const filteredByCategory = computed(() => {
-    const filter = categoryFilter.value
-    if (filter === 'All') return events.value as T[]
-    return (events.value as T[]).filter(event => event.category_id === filter)
-  })
-
-  const categoryCounts = computed(() => {
-    const counts: Record<string, number> = { all: 0 }
-    for (const event of events.value as T[]) {
-      counts.all++
-      const key = String(event.category_id ?? 'uncategorized')
-      counts[key] = (counts[key] ?? 0) + 1
-    }
-    return counts
-  })
-
-  return {
-    categoryFilter,
-    handleCategoryFilter,
-    filteredByCategory,
-    categoryCounts,
-  }
-}
-
 const STATUS_KEYS = ['registered', 'attended', 'absent', 'cancelled'] as const
 type StatusKey = (typeof STATUS_KEYS)[number]
 

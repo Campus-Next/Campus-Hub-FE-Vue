@@ -253,7 +253,6 @@ const registrationMessage = computed(() => {
   }
   if (eventData.value.registration_deadline) {
     const deadline = new Date(eventData.value.registration_deadline)
-    deadline.setHours(23, 59, 59, 999)
     if (now > deadline) return 'Pendaftaran Ditutup'
   }
   return ''

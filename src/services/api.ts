@@ -168,7 +168,7 @@ export const deleteEvent = (eventId: number | string, token: string) =>
   )
 
 export const fetchMyOrganizedEvents = (token: string) =>
-  request<Event[]>('/events/me/organized', { method: 'GET', headers: buildHeaders(token) })
+  request<Event[]>('/my-events?scope=organized', { method: 'GET', headers: buildHeaders(token) })
 
 // ===== Event participation =====
 
@@ -187,8 +187,8 @@ export const cancelRegistration = (eventId: number | string, token: string) =>
     },
   )
 
-export const fetchMyEvents = (token: string) =>
-  request<EventParticipant[]>('/my-events', { method: 'GET', headers: buildHeaders(token) })
+export const fetchMyRegisteredEvents = (token: string) =>
+  request<EventParticipant[]>('/my-events?scope=registered', { method: 'GET', headers: buildHeaders(token) })
 
 export const fetchUniqueCode = (eventId: number | string, token: string) =>
   request<{ unique_code: string | null; status: ParticipantStatus }>(`/events/${eventId}/my-code`, {

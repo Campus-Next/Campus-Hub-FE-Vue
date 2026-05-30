@@ -133,30 +133,18 @@
                 <div class="space-y-2">
                   <label :class="labelClasses">Waktu Mulai *</label>
                   <div class="grid grid-cols-2 gap-4">
-                    <!-- Date picker -->
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <i class="ri-calendar-line text-lg" />
-                      </span>
-                      <input
-                        v-model="start_date_date"
-                        type="date"
-                        :class="`${inputClasses} w-full pl-10`"
-                        required
-                      >
-                    </div>
-                    <!-- Time picker -->
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <i class="ri-time-line text-lg" />
-                      </span>
-                      <input
-                        v-model="start_date_time"
-                        type="time"
-                        :class="`${inputClasses} w-full pl-10 cursor-pointer`"
-                        required
-                      >
-                    </div>
+                    <input
+                      v-model="start_date_date"
+                      type="date"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                    <input
+                      v-model="start_date_time"
+                      type="time"
+                      :class="`${inputClasses} w-full cursor-pointer`"
+                      required
+                    >
                   </div>
                 </div>
 
@@ -164,30 +152,18 @@
                 <div class="space-y-2">
                   <label :class="labelClasses">Waktu Berakhir *</label>
                   <div class="grid grid-cols-2 gap-4">
-                    <!-- Date picker -->
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <i class="ri-calendar-line text-lg" />
-                      </span>
-                      <input
-                        v-model="end_date_date"
-                        type="date"
-                        :class="`${inputClasses} w-full pl-10`"
-                        required
-                      >
-                    </div>
-                    <!-- Time picker -->
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <i class="ri-time-line text-lg" />
-                      </span>
-                      <input
-                        v-model="end_date_time"
-                        type="time"
-                        :class="`${inputClasses} w-full pl-10 cursor-pointer`"
-                        required
-                      >
-                    </div>
+                    <input
+                      v-model="end_date_date"
+                      type="date"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                    <input
+                      v-model="end_date_time"
+                      type="time"
+                      :class="`${inputClasses} w-full cursor-pointer`"
+                      required
+                    >
                   </div>
                 </div>
 
@@ -221,13 +197,12 @@
                 </div>
 
                 <!-- Pendaftaran open/close -->
-                <!-- Constraint: deadline ≤ start_date (hari acara dimulai) -->
                 <div class="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700 flex items-start gap-2">
                   <i class="ri-information-line text-blue-500 mt-0.5 flex-shrink-0" />
                   <span>
-                    <strong>Aturan tanggal pendaftaran:</strong>
-                    Pendaftaran harus <em>ditutup</em> pada hari acara dimulai atau sebelumnya
-                    ({{ start_date_date || '—' }}).
+                    <strong>Aturan waktu pendaftaran:</strong>
+                    Pendaftaran harus <em>ditutup</em> paling lambat saat acara dimulai
+                    ({{ eventStartDateTime || '-' }}).
                   </span>
                 </div>
 
@@ -236,7 +211,7 @@
                     <label :class="labelClasses">Pendaftaran Buka *</label>
                     <input
                       v-model="registration_open"
-                      type="date"
+                      type="datetime-local"
                       :class="`${inputClasses} w-full`"
                       required
                     >
@@ -245,9 +220,9 @@
                     <label :class="labelClasses">Pendaftaran Tutup *</label>
                     <input
                       v-model="registration_deadline"
-                      type="date"
+                      type="datetime-local"
                       :min="registration_open || undefined"
-                      :max="start_date_date || undefined"
+                      :max="eventStartDateTime || undefined"
                       :class="[
                         inputClasses,
                         'w-full',
@@ -384,7 +359,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
@@ -426,12 +401,14 @@ const {
   isSecondStepValid,
   isFormComplete,
   isLinksValid,
+  eventStartDateTime,
   dateErrors,
   getFormData,
   getCleanEventLinks,
   setFormData,
   handleImageSelect,
   clearImage,
+  cleanupImagePreview,
   addEventLink,
   removeEventLink,
 } = useEventForm()
@@ -493,4 +470,6 @@ onMounted(async () => {
     setFormData((route.state as any).data)
   }
 })
+
+onUnmounted(cleanupImagePreview)
 </script>
