@@ -37,7 +37,10 @@ export function useEvents(
         apiFetchCategories(),
       ])
 
-      events.value = Array.isArray(eventList) ? eventList : []
+      const loadedEvents = Array.isArray(eventList) ? eventList : []
+      events.value = targetId && loadedEvents.some(event => event.category_id)
+        ? loadedEvents.filter(event => event.category_id === Number(targetId))
+        : loadedEvents
       categories.value = Array.isArray(categoryList) ? categoryList : []
 
       if (events.value.length === 0) {
