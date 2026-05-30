@@ -3,7 +3,7 @@
     <img
       :src="imageUrl"
       alt="Event image"
-      class="w-[372px] h-[232px] object-cover transition-transform duration-300 group-hover:scale-105"
+      :class="imageClasses"
     />
     <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
   </div>
@@ -12,22 +12,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import defaultPoster from '../assets/image/Poster.svg'
+import { resolveStorageUrl } from '../utils/helpers'
 
 interface Props {
   image?: string | null
+  compact?: boolean
 }
 
-const props = defineProps<Props>()
-
-const storage = import.meta.env.VITE_STORAGE_BASE_URL || 'http://localhost:8000/storage'
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+})
 
 const imageUrl = computed(() => {
   if (!props.image) {
     return defaultPoster
   }
-  if (props.image.startsWith('http://') || props.image.startsWith('https://')) {
-    return props.image
-  }
-  return `${storage}/${props.image}`
+  return resolveStorageUrl(props.image)
 })
+
+const imageClasses = computed(() => [
+  'w-full object-cover transition-transform duration-300 group-hover:scale-105',
+  props.compact ? 'h-[178px]' : 'h-[232px]',
+])
 </script>

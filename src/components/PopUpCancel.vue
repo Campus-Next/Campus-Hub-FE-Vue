@@ -33,9 +33,11 @@ import { cancelRegistration } from '../services/api'
 import { usePopupAnimation, useClickOutside } from '../composables/usePopup'
 import StatusIcon from './StatusIcon.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
+import type { EventParticipant } from '../types'
 
 const emit = defineEmits<{
   close: []
+  cancelled: [participant: EventParticipant]
 }>()
 
 const route = useRoute()
@@ -64,8 +66,9 @@ const handleCancelBooking = async () => {
   }
 
   try {
-    await cancelRegistration(route.params.id as string, accessToken)
-    window.location.reload()
+    const participant = await cancelRegistration(route.params.id as string, accessToken)
+    emit('cancelled', participant)
+    emit('close')
   } catch (error: any) {
     gagal.value = true
     message.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'

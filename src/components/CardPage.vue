@@ -1,12 +1,12 @@
 <template>
-  <div class="relative z-10">
-    <div class="flex flex-wrap justify-around px-14 gap-10">
+  <div :class="containerClasses">
+    <div :class="gridClasses">
       <template v-if="currentEvents.length > 0">
-        <div v-for="event in currentEvents" :key="event.id" class="gap-y-[50px]">
-          <Card @click="handleCardClick(event.id)">
-            <CardImage :image="event.images && event.images.length > 0 ? event.images[0].path : null" />
-            <CardBody :title="event.title" :content="event.description" />
-            <CardTanggal>{{ new Date(event.start_date).toLocaleDateString('id-ID') }}</CardTanggal>
+        <div v-for="event in currentEvents" :key="event.id" class="w-full flex justify-center">
+          <Card :compact="compact" @click="handleCardClick(event.id)">
+            <CardImage :compact="compact" :image="event.images && event.images.length > 0 ? event.images[0].path : null" />
+            <CardBody :compact="compact" :title="event.title" :content="event.description" />
+            <CardTanggal :compact="compact">{{ new Date(event.start_date).toLocaleDateString('id-ID') }}</CardTanggal>
           </Card>
         </div>
       </template>
@@ -46,27 +46,42 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from './Card.vue'
 import CardBody from './CardBody.vue'
-import CardKategori from './CardKategori.vue'
 import CardImage from './CardImage.vue'
 import CardTanggal from './CardTanggal.vue'
-import CardCreator from './CardCreator.vue'
 
 import type { Event } from '../types'
 
 interface Props {
   events: Event[]
+  compact?: boolean
+  eventsPerPage?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+  eventsPerPage: 6,
+})
 const router = useRouter()
 
 const currentPage = ref(1)
-const eventsPerPage = 6
+const compact = computed(() => props.compact)
+const eventsPerPage = computed(() => props.eventsPerPage)
 
-const indexOfLastEvent = computed(() => currentPage.value * eventsPerPage)
-const indexOfFirstEvent = computed(() => indexOfLastEvent.value - eventsPerPage)
+const containerClasses = computed(() => [
+  'relative z-10 w-full',
+  props.compact ? 'max-w-[1160px] mx-auto' : '',
+])
+
+const gridClasses = computed(() => [
+  props.compact
+    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 justify-items-center gap-10 px-6 sm:px-10 lg:px-12'
+    : 'flex flex-wrap justify-around px-14 gap-10',
+])
+
+const indexOfLastEvent = computed(() => currentPage.value * eventsPerPage.value)
+const indexOfFirstEvent = computed(() => indexOfLastEvent.value - eventsPerPage.value)
 const currentEvents = computed(() => props.events.slice(indexOfFirstEvent.value, indexOfLastEvent.value))
-const maxPage = computed(() => Math.ceil(props.events.length / eventsPerPage))
+const maxPage = computed(() => Math.ceil(props.events.length / eventsPerPage.value))
 
 const nextPage = () => {
   if (currentPage.value < maxPage.value) {

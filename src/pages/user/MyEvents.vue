@@ -60,12 +60,6 @@
                 Registered ({{ registeredCount }})
               </li>
               <li
-                :class="['cursor-pointer', statusFilter === 'Cancelled' ? 'font-bold underline' : '']"
-                @click="handleStatusFilter('Cancelled')"
-              >
-                Canceled ({{ canceledCount }})
-              </li>
-              <li
                 :class="['cursor-pointer', statusFilter === 'Attended' ? 'font-bold underline' : '']"
                 @click="handleStatusFilter('Attended')"
               >
@@ -76,6 +70,12 @@
                 @click="handleStatusFilter('Absent')"
               >
                 Absent ({{ absentCount }})
+              </li>
+              <li
+                :class="['cursor-pointer', statusFilter === 'Cancelled' ? 'font-bold underline' : '']"
+                @click="handleStatusFilter('Cancelled')"
+              >
+                Cancelled ({{ cancelledCount }})
               </li>
             </ul>
           </div>
@@ -120,7 +120,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { fetchMyEvents } from '../../services/api'
+import { fetchMyRegisteredEvents } from '../../services/api'
 import Navbar from '../../components/Navbar.vue'
 import { getEventImageUrl } from '../../utils/helpers'
 
@@ -174,7 +174,7 @@ const sortedEvents = computed(() => {
 })
 
 const counts = computed(() => {
-  const acc = { all: 0, registered: 0, cancelled: 0, attended: 0, absent: 0 } as Record<string, number>
+  const acc = { all: 0, registered: 0, attended: 0, absent: 0, cancelled: 0 } as Record<string, number>
   for (const p of events.value) {
     acc.all++
     const key = p.status?.toLowerCase()
@@ -185,13 +185,13 @@ const counts = computed(() => {
 
 const allCount = computed(() => counts.value.all)
 const registeredCount = computed(() => counts.value.registered)
-const canceledCount = computed(() => counts.value.cancelled)
 const attendedCount = computed(() => counts.value.attended)
 const absentCount = computed(() => counts.value.absent)
+const cancelledCount = computed(() => counts.value.cancelled)
 
 onMounted(async () => {
   const activeTab = (route as any).state?.activeTab
-  if (activeTab) {
+  if (['All', 'Registered', 'Attended', 'Absent', 'Cancelled'].includes(activeTab)) {
     statusFilter.value = activeTab as string
   }
 
@@ -204,7 +204,7 @@ onMounted(async () => {
   }
 
   try {
-    const data = await fetchMyEvents(token)
+    const data = await fetchMyRegisteredEvents(token)
     events.value = data
   } catch (err: any) {
     if (err.status === 403) {

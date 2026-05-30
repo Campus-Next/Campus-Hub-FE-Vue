@@ -31,9 +31,9 @@
             :tabs="[
               { value: 'All', label: 'All', count: statusCounts.all },
               { value: 'Registered', label: 'Registered', count: statusCounts.registered },
-              { value: 'Cancelled', label: 'Canceled', count: statusCounts.cancelled },
               { value: 'Attended', label: 'Attended', count: statusCounts.attended },
-              { value: 'Absent', label: 'Absent', count: statusCounts.absent }
+              { value: 'Absent', label: 'Absent', count: statusCounts.absent },
+              { value: 'Cancelled', label: 'Cancelled', count: statusCounts.cancelled }
             ]"
             :active-tab="statusFilter"
             @change="handleStatusFilter"
@@ -75,7 +75,7 @@ import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import FilterTabs from '../../components/FilterTabs.vue'
-import { fetchEventParticipants } from '../../services/api'
+import { fetchEventParticipants, fetchMyOrganizedEvents } from '../../services/api'
 import { useAuthCheck } from '../../composables/useAuthCheck'
 import { useStatusFilter } from '../../composables/useFilters'
 import type { EventParticipant } from '../../types'
@@ -121,7 +121,7 @@ const sortedEvents = computed(() => {
 watch(
   () => (route as any).state?.activeTab,
   (activeTab) => {
-    if (activeTab) {
+    if (['All', 'Registered', 'Attended', 'Absent', 'Cancelled'].includes(activeTab)) {
       statusFilter.value = activeTab as any
     }
   },
@@ -134,6 +134,13 @@ onMounted(async () => {
   if (!token) return
 
   try {
+    const organizedEvents = await fetchMyOrganizedEvents(token)
+    const ownsEvent = organizedEvents.some(event => String(event.id) === String(route.params.id))
+    if (!ownsEvent) {
+      router.replace('/my-events')
+      return
+    }
+
     const data = await fetchEventParticipants(route.params.id as string, token)
     events.value = data
   } catch (error) {

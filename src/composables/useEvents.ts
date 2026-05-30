@@ -5,6 +5,7 @@ import {
   fetchCategories as apiFetchCategories,
 } from '../services/api'
 import type { Category, Event } from '../types'
+import { isAdmin } from '../utils/authSession'
 
 export function useEvents(
   categoryId?: string | number,
@@ -20,14 +21,9 @@ export function useEvents(
     const targetId = id ?? categoryId
 
     if (options?.checkAdmin) {
-      try {
-        const user = JSON.parse(localStorage.getItem('user') || 'null')
-        if (user?.is_admin) {
-          router.replace('/')
-          return
-        }
-      } catch {
-        // ignore
+      if (isAdmin()) {
+        router.replace('/')
+        return
       }
     }
 
@@ -57,11 +53,6 @@ export function useEvents(
     }
   }
 
-  const clearEvents = () => {
-    events.value = []
-    error.value = null
-  }
-
   if (options?.autoLoad !== false) {
     onMounted(() => {
       window.scrollTo(0, 0)
@@ -75,6 +66,5 @@ export function useEvents(
     isLoading,
     error,
     loadEvents,
-    clearEvents,
   }
 }

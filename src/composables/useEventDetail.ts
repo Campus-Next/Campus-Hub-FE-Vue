@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { fetchEvent, fetchEventStatus } from '../services/api'
-import type { Event } from '../types'
+import { fetchEvent, fetchUniqueCode } from '../services/api'
+import type { Event, ParticipantStatus } from '../types'
 
 export function useEventDetail() {
   const eventData = ref<Event | null>(null)
@@ -36,7 +36,7 @@ export function useEventDetail() {
 }
 
 export function useEventStatus() {
-  const status = ref<string | null>(null)
+  const status = ref<ParticipantStatus | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
@@ -45,7 +45,7 @@ export function useEventStatus() {
     error.value = null
 
     try {
-      const data = await fetchEventStatus(Number(eventId), token)
+      const data = await fetchUniqueCode(Number(eventId), token)
       status.value = data.status
     } catch (err: any) {
       error.value = err.message || 'Terjadi kesalahan saat memuat status'

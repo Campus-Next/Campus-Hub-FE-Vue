@@ -66,7 +66,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { updatePassword } from '../services/api'
+import { clearAuthSession, getToken } from '../utils/authSession'
 
 interface Props {
   setShowPopUp: (value: boolean) => void
@@ -76,6 +78,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const router = useRouter()
 
 const bookingRef = ref<HTMLElement | null>(null)
 const isExiting = ref(false)
@@ -103,11 +106,9 @@ const handleUpdate = async () => {
         password: props.password,
         password_confirmation: props.confirmation,
       },
-      localStorage.getItem('token') || '',
+      getToken() || '',
     )
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('token_type')
+    clearAuthSession()
     message.value = data.message || 'Password berhasil diubah'
     status.value = 'success'
   } catch (error: any) {
@@ -134,7 +135,7 @@ watch(() => status.value, (newStatus) => {
       if (counter.value <= 0) {
         if (counterInterval) clearInterval(counterInterval)
         setTimeout(() => {
-          window.location.href = '/welcome'
+          router.replace('/welcome')
         }, 200)
       }
     }, 1000)

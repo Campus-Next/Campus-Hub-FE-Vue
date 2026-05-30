@@ -1,10 +1,11 @@
 import type {
-  ApiEnvelope,
   Cart,
   Category,
+  CheckoutResult,
   Event,
   EventLink,
   EventParticipant,
+  ParticipantStatus,
   User,
 } from '../types'
 
@@ -36,8 +37,15 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    const err: ApiError = new Error(body?.message || response.statusText)
-    err.data = body?.message || body
+    let errMsg = body?.message || response.statusText
+    if (body?.errors && typeof body.errors === 'object') {
+      const errorList = Object.values(body.errors).flat()
+      if (errorList.length > 0) {
+        errMsg = errorList.join(', ')
+      }
+    }
+    const err: ApiError = new Error(errMsg)
+    err.data = errMsg
     err.status = response.status
     throw err
   }
@@ -50,7 +58,7 @@ async function request<T>(
 
 // ===== Auth =====
 
-export const login = (credentials: { email: string; password: string; remember?: boolean }) =>
+export const login = (credentials: { email: string; password: string }) =>
   request<{ access_token: string; token_type: string; expires_in: number; user: User; roles: string[] }>(
     '/auth/login',
     {
@@ -61,7 +69,7 @@ export const login = (credentials: { email: string; password: string; remember?:
     { unwrap: false },
   )
 
-export const register = (payload: { name: string; email: string; password: string; password_confirmation: string }) =>
+export const register = (payload: { name: string; email: string; password: string }) =>
   request<{ message: string }>(
     '/auth/register',
     {
@@ -81,9 +89,6 @@ export const logout = (token: string) =>
     },
     { unwrap: false },
   )
-
-export const fetchUserProfile = (token: string) =>
-  request<User>('/auth/me', { method: 'GET', headers: buildHeaders(token) })
 
 export const updateUserProfile = (payload: { name?: string; email?: string }, token: string) =>
   request<User>('/auth/me', {
@@ -163,7 +168,7 @@ export const deleteEvent = (eventId: number | string, token: string) =>
   )
 
 export const fetchMyOrganizedEvents = (token: string) =>
-  request<Event[]>('/events/me/organized', { method: 'GET', headers: buildHeaders(token) })
+  request<Event[]>('/my-events?scope=organized', { method: 'GET', headers: buildHeaders(token) })
 
 // ===== Event participation =====
 
@@ -174,20 +179,19 @@ export const enrollEvent = (eventId: number | string, token: string) =>
   })
 
 export const cancelRegistration = (eventId: number | string, token: string) =>
-  request<{ message: string }>(
+  request<EventParticipant>(
     `/events/${eventId}/enroll`,
     {
       method: 'DELETE',
       headers: buildHeaders(token),
     },
-    { unwrap: false },
   )
 
-export const fetchMyEvents = (token: string) =>
-  request<EventParticipant[]>('/my-events', { method: 'GET', headers: buildHeaders(token) })
+export const fetchMyRegisteredEvents = (token: string) =>
+  request<EventParticipant[]>('/my-events?scope=registered', { method: 'GET', headers: buildHeaders(token) })
 
 export const fetchUniqueCode = (eventId: number | string, token: string) =>
-  request<{ unique_code: string | null; status: string }>(`/events/${eventId}/my-code`, {
+  request<{ unique_code: string | null; status: ParticipantStatus }>(`/events/${eventId}/my-code`, {
     method: 'GET',
     headers: buildHeaders(token),
   })
@@ -206,9 +210,6 @@ export const checkInParticipant = (eventId: number | string, code: string, token
   })
 
 // ===== Event links =====
-
-export const fetchEventLinks = (eventId: number | string, token?: string) =>
-  request<EventLink[]>(`/events/${eventId}/links`, { method: 'GET', headers: buildHeaders(token) })
 
 export const createEventLink = (
   eventId: number | string,
@@ -246,22 +247,11 @@ export const fetchCart = (token: string) =>
   request<Cart[]>('/carts', { method: 'GET', headers: buildHeaders(token) })
 
 export const addToCart = (
-  payload: { event_id: number; quantity?: number },
+  payload: { event_id: number },
   token: string,
 ) =>
   request<Cart>('/carts', {
     method: 'POST',
-    headers: buildHeaders(token, true),
-    body: JSON.stringify({ quantity: 1, ...payload }),
-  })
-
-export const updateCartItem = (
-  cartId: number | string,
-  payload: { quantity: number },
-  token: string,
-) =>
-  request<Cart>(`/carts/${cartId}`, {
-    method: 'PATCH',
     headers: buildHeaders(token, true),
     body: JSON.stringify(payload),
   })
@@ -274,18 +264,7 @@ export const removeCartItem = (cartId: number | string, token: string) =>
   )
 
 export const checkoutCart = (token: string) =>
-  request<EventParticipant[]>('/carts/checkout', {
+  request<CheckoutResult>('/carts/checkout', {
     method: 'POST',
     headers: buildHeaders(token),
   })
-
-// ===== Backwards-compatibility shim =====
-
-export const registerEventWithToken = enrollEvent
-export const fetchEventDetails = fetchEvent
-export const fetchEventStatus = async (eventId: number | string, token: string) => {
-  const code = await fetchUniqueCode(eventId, token)
-  return { status: code.status }
-}
-
-export type { ApiEnvelope }

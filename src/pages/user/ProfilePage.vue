@@ -150,7 +150,8 @@ import PopUpDelete from '../../components/PopUpDelete.vue'
 import PopUpLogOut from '../../components/PopUpLogOut.vue'
 import PopUpBerhasil from '../../components/PopUpBerhasil.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
-import { fetchUserProfile, updateUserProfile } from '../../services/api'
+import { updateUserProfile } from '../../services/api'
+import { AUTH_SESSION_EVENT, getStoredRoles } from '../../utils/authSession'
 
 interface User {
   name: string
@@ -158,7 +159,6 @@ interface User {
 }
 
 const router = useRouter()
-const storage = import.meta.env.VITE_STORAGE_BASE_URL
 
 const activePage = ref('info-personal')
 const user = ref<User>({
@@ -187,12 +187,16 @@ const handleUpdate = async () => {
       { name: user.value.name, email: user.value.email },
       token || '',
     )
-    localStorage.setItem('user', JSON.stringify(updated))
+    const roles = getStoredRoles()
+    localStorage.setItem('user', JSON.stringify({
+      ...updated,
+      roles,
+      is_admin: roles.includes('admin'),
+    }))
+    window.dispatchEvent(new Event(AUTH_SESSION_EVENT))
+    user.value = { name: updated.name, email: updated.email }
     datas.value = 'Profil berhasil diubah'
     showBerhasil.value = true
-    setTimeout(() => {
-      window.location.reload()
-    }, 2000)
   } catch (error: any) {
     datas.value = error.data || 'Koneksi bermasalah, silahkan coba lagi'
     showGagal.value = true

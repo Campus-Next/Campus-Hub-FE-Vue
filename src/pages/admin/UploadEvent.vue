@@ -11,7 +11,7 @@
           <p class="text-lg text-gray-600 max-w-3xl mx-auto">
             Isi kelengkapan acara Anda sebagai penyelenggara dengan detail yang menarik
           </p>
-          
+
           <StepIndicator
             :current-step="step"
             :steps="[1, 2, 3]"
@@ -24,12 +24,23 @@
       <div class="max-w-7xl mx-auto">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div class="p-8 lg:p-12">
-            <!-- For preview, since EventPreview expects the old structure, we should either rewrite EventPreview or just map it.
-                 Actually we'll map to the generic variables we exported from useEventForm so EventPreview can work if we update it.
-                 Let's update EventPreview to expect the new fields. We will pass our raw form data down. -->
+
+            <!-- ── Section 3: Preview ─────────────────────────────────── -->
             <EventPreview
               v-if="step === 3"
-              :event-data="{ title, description, start_date, end_date, location, max_participants, isOffline }"
+              :event-data="{
+                title,
+                description,
+                start_date_date,
+                start_date_time,
+                end_date_date,
+                end_date_time,
+                location,
+                max_participants,
+                isOffline,
+                imagePreviewUrl,
+                event_links: getCleanEventLinks(),
+              }"
             >
               <template #actions>
                 <button :class="buttonSecondaryClasses" @click="handleBack">
@@ -38,18 +49,65 @@
                 <button
                   class="bg-green-500 hover:bg-green-600 font-semibold py-3 px-8 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="isLoading"
-                  @click="handlePreview"
+                  @click="handlePublish"
                 >
                   {{ isLoading ? 'Mempublikasi...' : 'Publikasi' }}
                 </button>
               </template>
             </EventPreview>
 
-            <EventFormLayout
-              v-else
-              :step="step"
-            >
+            <EventFormLayout v-else :step="step">
+
+              <!-- ── Section 1: Info Acara ─────────────────────────────── -->
               <div v-if="step === 1" class="space-y-6">
+
+                <!-- Image Upload -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Poster / Gambar Acara</label>
+                  <div
+                    class="relative border-2 border-dashed rounded-xl transition-all duration-200 overflow-hidden"
+                    :class="imagePreviewUrl
+                      ? 'border-blue-400 bg-blue-50'
+                      : 'border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'"
+                    @dragover.prevent
+                    @drop.prevent="onDrop"
+                  >
+                    <!-- Preview -->
+                    <div v-if="imagePreviewUrl" class="relative group">
+                      <img
+                        :src="imagePreviewUrl"
+                        alt="Preview Poster"
+                        class="w-full max-h-64 object-cover rounded-xl"
+                      >
+                      <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                        <button
+                          type="button"
+                          class="bg-white text-red-500 font-semibold px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                          @click="clearImage"
+                        >
+                          <i class="ri-delete-bin-line mr-2" />Hapus Gambar
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Drop zone -->
+                    <label v-else class="flex flex-col items-center justify-center py-12 cursor-pointer">
+                      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="ri-image-add-line text-3xl text-blue-500" />
+                      </div>
+                      <p class="text-gray-700 font-semibold mb-1">Klik untuk upload atau drag & drop</p>
+                      <p class="text-gray-400 text-sm">JPEG, PNG, WebP — Maks. 5 MB</p>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        class="hidden"
+                        @change="onFileChange"
+                      >
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Title -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Judul Acara *</label>
                   <input
@@ -82,23 +140,40 @@
                   <div class="space-y-2">
                     <label :class="labelClasses">Waktu Mulai *</label>
                     <input
-                      v-model="start_date"
-                      type="datetime-local"
+                      v-model="start_date_date"
+                      type="date"
                       :class="`${inputClasses} w-full`"
                       required
                     >
-                  </div>
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Waktu Berakhir *</label>
                     <input
-                      v-model="end_date"
-                      type="datetime-local"
-                      :class="`${inputClasses} w-full`"
+                      v-model="start_date_time"
+                      type="time"
+                      :class="`${inputClasses} w-full cursor-pointer`"
                       required
                     >
                   </div>
                 </div>
 
+                <!-- End Date & Time -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Waktu Berakhir *</label>
+                  <div class="grid grid-cols-2 gap-4">
+                    <input
+                      v-model="end_date_date"
+                      type="date"
+                      :class="`${inputClasses} w-full`"
+                      required
+                    >
+                    <input
+                      v-model="end_date_time"
+                      type="time"
+                      :class="`${inputClasses} w-full cursor-pointer`"
+                      required
+                    >
+                  </div>
+                </div>
+
+                <!-- Description -->
                 <div class="space-y-2">
                   <label :class="labelClasses">Deskripsi *</label>
                   <textarea
@@ -111,51 +186,65 @@
                 </div>
               </div>
 
+              <!-- ── Section 2: Detail & Lokasi ───────────────────────── -->
               <div v-else class="space-y-6">
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Jumlah Tiket / Kapasitas *</label>
-                    <input
-                      v-model="max_participants"
-                      type="number"
-                      placeholder="Masukkan jumlah tiket"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                  </div>
-                  <div class="space-y-2">
-                    <label :class="labelClasses">Biaya Pendaftaran (0 = Gratis) *</label>
-                    <input
-                      v-model="registration_fee"
-                      type="number"
-                      placeholder="Contoh: 50000"
-                      :class="`${inputClasses} w-full`"
-                      required
-                    >
-                  </div>
+
+                <!-- Kapasitas -->
+                <div class="space-y-2">
+                  <label :class="labelClasses">Kapasitas Peserta *</label>
+                  <input
+                    v-model="max_participants"
+                    type="number"
+                    min="1"
+                    placeholder="Masukkan jumlah maksimum peserta"
+                    :class="`${inputClasses} w-full`"
+                    required
+                  >
+                </div>
+
+                <!-- Pendaftaran open/close -->
+                <div class="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700 flex items-start gap-2">
+                  <i class="ri-information-line text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>
+                    <strong>Aturan waktu pendaftaran:</strong>
+                    Pendaftaran harus <em>ditutup</em> paling lambat saat acara dimulai
+                    ({{ eventStartDateTime || '-' }}).
+                  </span>
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
+                  <div class="space-y-1">
                     <label :class="labelClasses">Pendaftaran Buka *</label>
                     <input
                       v-model="registration_open"
-                      type="date"
+                      type="datetime-local"
                       :class="`${inputClasses} w-full`"
                       required
                     >
                   </div>
-                  <div class="space-y-2">
+                  <div class="space-y-1">
                     <label :class="labelClasses">Pendaftaran Tutup *</label>
                     <input
                       v-model="registration_deadline"
-                      type="date"
-                      :class="`${inputClasses} w-full`"
+                      type="datetime-local"
+                      :min="registration_open || undefined"
+                      :max="eventStartDateTime || undefined"
+                      :class="[
+                        inputClasses,
+                        'w-full',
+                        dateErrors.registration_deadline ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : ''
+                      ]"
                       required
                     >
+                    <!-- Inline error -->
+                    <p v-if="dateErrors.registration_deadline" class="text-sm text-red-600 flex items-center gap-1 mt-1">
+                      <i class="ri-error-warning-line" />
+                      {{ dateErrors.registration_deadline }}
+                    </p>
                   </div>
                 </div>
 
+                <!-- Tipe Acara -->
                 <div class="space-y-4">
                   <label :class="labelClasses">Tipe Acara *</label>
                   <div class="flex gap-8">
@@ -167,9 +256,7 @@
                         :value="false"
                         class="w-5 h-5 text-blue-600 border-2 border-gray-300 focus:ring-blue-500"
                       >
-                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">
-                        🌐 Online
-                      </span>
+                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">🌐 Online</span>
                     </label>
                     <label class="flex items-center space-x-3 cursor-pointer group">
                       <input
@@ -179,13 +266,12 @@
                         :value="true"
                         class="w-5 h-5 text-blue-600 border-2 border-gray-300 focus:ring-blue-500"
                       >
-                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">
-                        📍 Offline
-                      </span>
+                      <span class="text-gray-700 group-hover:text-blue-600 transition-colors">📍 Offline</span>
                     </label>
                   </div>
                 </div>
 
+                <!-- Lokasi (only for offline) -->
                 <div v-if="isOffline" class="space-y-2">
                   <label :class="labelClasses">Lokasi *</label>
                   <input
@@ -196,8 +282,56 @@
                     required
                   >
                 </div>
+
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between gap-4">
+                    <label :class="labelClasses">Link Acara</label>
+                    <button
+                      type="button"
+                      class="bg-blue-50 text-blue-600 border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-100 transition"
+                      @click="addEventLink"
+                    >
+                      <i class="ri-add-line mr-1" />Tambah Link
+                    </button>
+                  </div>
+                  <div v-if="eventLinks.length === 0" class="text-sm text-gray-500">
+                    Tambahkan Google Form, media sosial, atau tautan informasi acara jika diperlukan.
+                  </div>
+                  <div v-for="(link, index) in eventLinks" :key="index" class="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] gap-3">
+                    <input
+                      v-model="link.title"
+                      type="text"
+                      maxlength="255"
+                      placeholder="Judul link"
+                      :class="[inputClasses, 'w-full min-w-0', eventLinkErrors[index] ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : '']"
+                    >
+                    <input
+                      v-model="link.url"
+                      type="url"
+                      maxlength="255"
+                      placeholder="https://example.com"
+                      :class="[inputClasses, 'w-full min-w-0', eventLinkErrors[index] ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : '']"
+                    >
+                    <button
+                      type="button"
+                      class="border border-red-200 text-red-600 rounded-lg w-11 h-11 hover:bg-red-50 transition flex items-center justify-center"
+                      aria-label="Hapus link"
+                      @click="removeEventLink(index)"
+                    >
+                      <i class="ri-delete-bin-line text-lg" />
+                    </button>
+                    <p v-if="eventLinkErrors[index]" class="md:col-span-3 text-sm text-red-600 flex items-center gap-1 -mt-1">
+                      <i class="ri-error-warning-line" />
+                      {{ eventLinkErrors[index] }}
+                    </p>
+                  </div>
+                  <p v-if="!isLinksValid" class="text-sm text-red-600">
+                    Setiap link harus memiliki judul dan URL valid yang diawali http:// atau https://.
+                  </p>
+                </div>
               </div>
 
+              <!-- Navigation Buttons -->
               <div class="flex justify-end space-x-4 pt-8 border-t border-gray-200">
                 <button
                   type="button"
@@ -208,8 +342,8 @@
                 </button>
                 <button
                   type="button"
-                  :class="(step === 1 && isFormValid) || (step === 2 && isSecondStepValid) ? buttonPrimaryClasses : 'bg-gray-400 text-white py-3 px-8 rounded-lg cursor-not-allowed'"
-                  :disabled="(step === 1 && !isFormValid) || (step === 2 && !isSecondStepValid)"
+                  :class="canGoNext ? buttonPrimaryClasses : 'bg-gray-400 text-white py-3 px-8 rounded-lg cursor-not-allowed'"
+                  :disabled="!canGoNext"
                   @click="handleNext"
                 >
                   {{ step === 1 ? 'Lanjut' : 'Preview' }}
@@ -220,7 +354,7 @@
         </div>
       </div>
     </div>
-    
+
     <PopUpGagal
       v-if="isPopupVisible"
       :is-visible="isPopupVisible"
@@ -231,7 +365,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import PopUpGagal from '../../components/PopUpGagal.vue'
@@ -244,8 +378,8 @@ import { useAuthCheck } from '../../composables/useAuthCheck'
 import type { Category } from '../../types'
 
 const router = useRouter()
-const route = useRoute()
-const step = ref(route.state?.step || 1)
+const route  = useRoute()
+const step   = ref((route.state as any)?.step || 1)
 const isPopupVisible = ref(false)
 const popupMessage = ref('')
 const isLoading = ref(false)
@@ -256,10 +390,12 @@ useAuthCheck(true)
 const {
   title,
   description,
-  start_date,
-  end_date,
+  category_id,
+  start_date_date,
+  start_date_time,
+  end_date_date,
+  end_date_time,
   max_participants,
-  registration_fee,
   registration_open,
   registration_deadline,
   location,
@@ -267,47 +403,66 @@ const {
   category_id,
   isFormValid,
   isSecondStepValid,
+  isFormComplete,
+  isLinksValid,
+  eventStartDateTime,
+  dateErrors,
   getFormData,
-  setFormData
+  getCleanEventLinks,
+  setFormData,
+  handleImageSelect,
+  clearImage,
+  cleanupImagePreview,
+  addEventLink,
+  removeEventLink,
 } = useEventForm()
 
-const inputClasses = 'border-2 border-gray-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg px-4 py-3 transition-all duration-200 outline-none'
-const labelClasses = 'text-lg font-semibold text-gray-700 min-w-[120px]'
-const buttonPrimaryClasses = 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg'
+const inputClasses          = 'border-2 border-gray-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-lg px-4 py-3 transition-all duration-200 outline-none'
+const labelClasses          = 'text-lg font-semibold text-gray-700'
+const buttonPrimaryClasses  = 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg'
 const buttonSecondaryClasses = 'border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold py-3 px-8 rounded-lg transition-all duration-200'
 
-const setStep = (newStep: number) => {
-  step.value = newStep
+const canGoNext = computed(() => step.value === 1 ? isFormValid.value : isFormComplete.value)
+
+const setStep = (newStep: number) => { step.value = newStep }
+const handleNext = () => { if (step.value < 3) step.value++ }
+const handleBack = () => { if (step.value > 1) step.value-- }
+
+// File handlers
+const onFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) handleImageSelect(file)
+}
+const onDrop = (e: DragEvent) => {
+  const file = e.dataTransfer?.files?.[0]
+  if (file && file.type.startsWith('image/')) handleImageSelect(file)
 }
 
-const handleNext = () => {
-  if (step.value === 1) step.value = 2
-  else if (step.value === 2) step.value = 3
-}
-
-const handleBack = () => {
-  if (step.value === 2) step.value = 1
-  else if (step.value === 3) step.value = 2
-}
-
-const handlePreview = async () => {
+const handlePublish = async () => {
   isLoading.value = true
-  
   try {
-    const token = localStorage.getItem('token')
+    const token    = localStorage.getItem('token')
     const formData = getFormData()
-    
-    await createEvent(formData, token!)
-    router.push('/my-events')
+    const event = await createEvent(formData, token!)
+    try {
+      await Promise.all(
+        getCleanEventLinks().map(link => createEventLink(event.id, { title: link.title, url: link.url }, token!)),
+      )
+      router.push('/my-events')
+    } catch (linkError: any) {
+      popupMessage.value = linkError.data || 'Event berhasil dibuat, tetapi sebagian link gagal disimpan. Silakan perbaiki di halaman edit.'
+      isPopupVisible.value = true
+      setTimeout(() => router.push(`/my-events/${event.id}/edit`), 1600)
+    }
   } catch (error: any) {
-    popupMessage.value = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
+    popupMessage.value  = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
     isPopupVisible.value = true
   } finally {
     isLoading.value = false
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.scrollTo(0, 0)
   fetchCategories()
     .then((data) => {
@@ -321,4 +476,6 @@ onMounted(() => {
     setFormData(route.state.data)
   }
 })
+
+onUnmounted(cleanupImagePreview)
 </script>

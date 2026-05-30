@@ -25,8 +25,15 @@
         </ul>
       </div>
 
-      <div class="flex justify-end gap-x-3 items-center flex-shrink-0 w-56">
-
+      <div class="flex justify-end gap-x-3 items-center flex-shrink-0 w-auto min-w-fit">
+        <router-link
+          v-if="!isAdminUser"
+          :to="cartRoute"
+          :class="`relative inline-flex items-center justify-center w-11 h-11 min-w-11 min-h-11 aspect-square flex-none shrink-0 rounded-full border-2 ${styles.border} ${styles.buttonText} hover:scale-105 transition-all duration-300`"
+          aria-label="Cart"
+        >
+          <i class="ri-shopping-cart-2-line text-2xl leading-none" />
+        </router-link>
         <div v-if="isLoading" class="w-12 h-12 rounded-full bg-gray-300"></div>
         <router-link v-else-if="userData" to="/account/profile" class="block">
           <img
@@ -35,7 +42,7 @@
             class="w-12 h-12 rounded-full object-cover bg-gray-300 hover:scale-105 transition-transform duration-300"
           />
         </router-link>
-        <div v-else class="sm:flex gap-x-[20px] sm:gap-x-[10px] item-center text-nowrap">
+        <div v-else class="sm:flex gap-x-[20px] sm:gap-x-[10px] items-center text-nowrap flex-none">
           <router-link to="/welcome">
             <button class="hover:scale-105 transition-all duration-300 bg-[#027FFF] border rounded-[10px] text-white sm:text-[15px] font-medium sm:w-[80px] sm:h-[30px] md:w-[155px] md:h-[46px] md:text-[20px] tengah:w-[120px] tengah:h-[36px] tengah:text-[17px]">
               Login
@@ -64,7 +71,7 @@
       <ul :class="`flex flex-col space-y-4 ${styles.text} text-[20px] font-medium`">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/my-events">MyEvent</router-link></li>
-
+        <li v-if="!isAdminUser"><router-link :to="cartRoute">Keranjang</router-link></li>
         <li>
           <button @click="aboutus" class="transition-all duration-3000 hover:scale-105 cursor-pointer">
             About Us
@@ -76,14 +83,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import logo from '../assets/image/logo.svg'
 import logo2 from '../assets/image/logo2.svg'
+import { AUTH_SESSION_EVENT, getStoredUser, isAdmin, isAuthenticated } from '../utils/authSession'
 
 interface UserData {
   name: string
-  is_admin?: boolean
 }
 
 const route = useRoute()
@@ -92,13 +99,14 @@ const router = useRouter()
 const userData = ref<UserData | null>(null)
 const isMenuOpen = ref(false)
 const isLoading = ref(true)
+const authVersion = ref(0)
 
 const darkThemePaths = [
   '/my-events',
   '/account/profile',
   '/account/password',
   '/events/upload',
-  '/events/preview'
+  '/cart'
 ]
 
 const isDarkTheme = computed(() => {
@@ -125,6 +133,26 @@ const userPhoto = computed(() => {
   return `https://eu.ui-avatars.com/api/?name=${encodeURIComponent(userData.value.name)}&size=48&background=6b7280&color=ffffff`
 })
 
+const isAdminUser = computed(() => {
+  authVersion.value
+  route.fullPath
+  return isAdmin()
+})
+
+const cartRoute = computed(() => {
+  authVersion.value
+  route.fullPath
+  return isAuthenticated()
+    ? '/cart'
+    : { path: '/user/login', query: { redirect: '/cart' } }
+})
+
+const syncAuthState = () => {
+  authVersion.value++
+  userData.value = getStoredUser()
+  isLoading.value = false
+}
+
 const aboutus = () => {
   const aboutUsElement = document.getElementById('footer')
   
@@ -149,15 +177,18 @@ const toggleMenu = () => {
 }
 
 onMounted(() => {
-  const user = localStorage.getItem('user')
-  if (user) {
-    userData.value = JSON.parse(user)
-  }
-  isLoading.value = false
+  syncAuthState()
+  window.addEventListener(AUTH_SESSION_EVENT, syncAuthState)
 
   const savedMenuState = localStorage.getItem('isMenuOpen')
   if (savedMenuState === 'true') {
     isMenuOpen.value = true
   }
+})
+
+watch(() => route.fullPath, syncAuthState)
+
+onUnmounted(() => {
+  window.removeEventListener(AUTH_SESSION_EVENT, syncAuthState)
 })
 </script>

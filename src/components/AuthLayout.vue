@@ -9,7 +9,7 @@
         <h1 v-animate="'animate__animated animate__fadeInLeft'" class="font-semibold tengah:text-[32px] sm:text-[28px] text-[#003266]">
           {{ title }}
         </h1>
-        <p v-if="subtitle" v-animate="'animate__animated animate__fadeInLeft animate__delay-1s'" class="text-[#003266] font-normal text-[15px] mb-3">
+        <p v-if="subtitle" v-animate="'animate__animated animate__fadeInLeft animate__faster'" class="text-[#003266] font-normal text-[15px] mb-3">
           {{ subtitle }}
         </p>
       </div>

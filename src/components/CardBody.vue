@@ -1,9 +1,9 @@
 <template>
-  <div class="w-full max-w-[369px] space-y-3 flex-grow">
-    <h1 class="font-bold text-[24px] leading-tight text-gray-800 line-clamp-2">
+  <div :class="bodyClasses">
+    <h1 :class="titleClasses">
       {{ truncatedTitle }}
     </h1>
-    <p class="text-[15px] font-normal text-gray-600 leading-relaxed line-clamp-3">
+    <p :class="contentClasses">
       {{ truncatedContent }}
     </p>
   </div>
@@ -15,9 +15,12 @@ import { computed } from 'vue'
 interface Props {
   title: string
   content: string
+  compact?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+})
 
 const truncateText = (text: string, maxWords: number): string => {
   if (!text) return ''
@@ -28,6 +31,21 @@ const truncateText = (text: string, maxWords: number): string => {
   return text
 }
 
-const truncatedTitle = computed(() => truncateText(props.title, 4))
-const truncatedContent = computed(() => truncateText(props.content, 12))
+const truncatedTitle = computed(() => truncateText(props.title, props.compact ? 5 : 4))
+const truncatedContent = computed(() => truncateText(props.content, props.compact ? 10 : 12))
+
+const bodyClasses = computed(() => [
+  'w-full flex-grow',
+  props.compact ? 'space-y-2' : 'max-w-[369px] space-y-3',
+])
+
+const titleClasses = computed(() => [
+  'font-bold leading-tight text-gray-800 line-clamp-2',
+  props.compact ? 'text-[22px]' : 'text-[24px]',
+])
+
+const contentClasses = computed(() => [
+  'font-normal text-gray-600 leading-relaxed line-clamp-3',
+  props.compact ? 'text-[14px]' : 'text-[15px]',
+])
 </script>

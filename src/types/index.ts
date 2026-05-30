@@ -5,7 +5,19 @@ export interface User {
   email_verified_at?: string
   created_at?: string
   updated_at?: string
-  is_admin?: boolean
+}
+
+export interface AuthSessionUser extends User {
+  roles: string[]
+  is_admin: boolean
+}
+
+export interface AuthSession {
+  token: string
+  token_type: string
+  expires_at: number
+  roles: string[]
+  user: AuthSessionUser
 }
 
 export interface Category {
@@ -47,18 +59,22 @@ export interface Event {
   created_at?: string
   updated_at?: string
   status?: string
+  participants_count?: number
   category?: Category | null
   organizer?: User | null
   event_links?: EventLink[]
   images?: EventImage[]
 }
 
+export type ParticipantStatus = 'registered' | 'attended' | 'absent' | 'cancelled'
+
 export interface EventParticipant {
   id: number
   event_id: number
   user_id: number
-  status: 'registered' | 'cancelled' | 'attended' | 'absent'
+  status: ParticipantStatus
   unique_code?: string | null
+  cancelled_at?: string | null
   event?: Event
   user?: User
   created_at?: string
@@ -69,10 +85,14 @@ export interface Cart {
   id: number
   user_id: number
   event_id: number
-  quantity: number
   event?: Event
   created_at?: string
   updated_at?: string
+}
+
+export interface CheckoutResult {
+  enrolled: EventParticipant[]
+  skipped: Array<{ event_id: number; reason: string }>
 }
 
 export interface ApiEnvelope<T> {

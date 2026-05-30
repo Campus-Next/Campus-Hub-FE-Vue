@@ -83,7 +83,7 @@
               @click="handleCategoryClick(category.id)"
             >
               <div class="w-20 h-20 rounded-full bg-[#EAF4FF] flex items-center justify-center">
-                <i class="ri-calendar-event-line text-3xl text-[#027FFF]" />
+                <i :class="[getCategoryIcon(category.name), 'text-3xl text-[#027FFF]']" />
               </div>
               <span class="text-sm">{{ category.name }}</span>
             </button>
@@ -100,13 +100,13 @@
         Jelajahi Acara Unggulan
       </h1>
 
-      <div v-animate class="flex flex-wrap justify-center mb-[80px] relative z-10 w-full max-w-7xl">
+      <div v-animate class="flex flex-wrap justify-center mb-[80px] relative z-10 w-full max-w-[1320px]">
         <div v-if="isLoading" class="flex items-center justify-center py-20 w-full">
           <div class="loader w-16 h-16 border-4 border-[#027FFF] border-t-transparent rounded-full animate-spin"></div>
           <p class="ml-4 text-lg font-medium">Loading...</p>
         </div>
         <p v-else-if="error" class="text-red-500 py-20">{{ error }}</p>
-        <CardPage v-else :events="events" />
+        <CardPage v-else :events="events" compact />
       </div>
 
       <img
@@ -130,6 +130,7 @@ import Navbar from '../../components/Navbar.vue'
 import { useCountUp } from '../../composables/useCountUp'
 import { computed, ref } from 'vue'
 import { useEvents } from '../../composables/useEvents'
+import { getCategoryIcon } from '../../utils/categoryIcons'
 
 const { events, categories, isLoading, error, loadEvents } = useEvents(undefined, { autoLoad: true })
 const selectedCategoryId = ref<number | null>(null)
