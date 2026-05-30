@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from './Card.vue'
 import CardBody from './CardBody.vue'
@@ -82,6 +82,10 @@ const indexOfLastEvent = computed(() => currentPage.value * eventsPerPage.value)
 const indexOfFirstEvent = computed(() => indexOfLastEvent.value - eventsPerPage.value)
 const currentEvents = computed(() => props.events.slice(indexOfFirstEvent.value, indexOfLastEvent.value))
 const maxPage = computed(() => Math.ceil(props.events.length / eventsPerPage.value))
+
+watch(() => props.events, () => {
+  currentPage.value = 1
+})
 
 const nextPage = () => {
   if (currentPage.value < maxPage.value) {
