@@ -53,7 +53,6 @@ export interface Event {
   end_date: string
   location: string
   max_participants: number
-  registration_fee: string | number
   registration_open: string
   registration_deadline: string
   created_at?: string

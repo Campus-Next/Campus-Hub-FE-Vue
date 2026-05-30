@@ -150,10 +150,12 @@ import Footer from '../../components/Footer.vue'
 import Navbar from '../../components/Navbar.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import { useCountUp } from '../../composables/useCountUp'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useEvents } from '../../composables/useEvents'
+import { useServerList } from '../../composables/useServerList'
+import { fetchEventsPage } from '../../services/api'
 import { getCategoryIcon } from '../../utils/categoryIcons'
-import type { Category, Event } from '../../types'
+import type { Event } from '../../types'
 
 const {
   items,
@@ -172,8 +174,7 @@ const {
   setPage,
 } = useServerList<Event>(query => fetchEventsPage(query), { perPage: 12 })
 
-const { events, categories, isLoading, error, loadEvents } = useEvents(undefined, { autoLoad: true })
-const selectedCategoryId = ref<number | null>(null)
+const { categories } = useEvents(undefined, { autoLoad: true })
 
 const categoryCount = computed(() => categories.value.length)
 
@@ -186,8 +187,7 @@ const scrollToAcara = () => {
 }
 
 const handleCategoryClick = (categoryId: number | null) => {
-  selectedCategoryId.value = categoryId
-  loadEvents(categoryId ?? undefined)
+  setCategory(categoryId)
   scrollToAcara()
 }
 </script>

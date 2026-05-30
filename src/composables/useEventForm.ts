@@ -50,7 +50,6 @@ export function useEventForm(initialData?: any) {
   const registration_deadline = ref(initialData?.registration_deadline || '')
   const location = ref(initialData?.location || '')
   const isOffline = ref(initialData?.isOffline || false)
-  const category_id = ref(initialData?.category_id ? String(initialData.category_id) : '')
 
   // Image upload
   const imageFile = ref<File | null>(null)
@@ -149,9 +148,6 @@ export function useEventForm(initialData?: any) {
     formData.append('registration_deadline', toBackendDateTime(registration_deadline.value))
     formData.append('max_participants', String(max_participants.value))
     formData.append('location', isOffline.value ? location.value : 'Online')
-    if (category_id.value) {
-      formData.append('category_id', category_id.value)
-    }
 
     if (imageFile.value) {
       formData.append('image', imageFile.value)
@@ -188,10 +184,8 @@ export function useEventForm(initialData?: any) {
     registration_deadline.value = toDateTimeLocal(data.registration_deadline || '')
 
     max_participants.value = data.max_participants || data.slot || ''
-    registration_fee.value = data.registration_fee || '0'
     location.value = data.location || ''
     isOffline.value = data.location && data.location !== 'Online'
-    category_id.value = data.category_id ? String(data.category_id) : ''
   }
 
   return {
@@ -207,7 +201,6 @@ export function useEventForm(initialData?: any) {
     registration_deadline,
     location,
     isOffline,
-    category_id,
     isFormValid,
     isSecondStepValid,
     isFormComplete,
