@@ -116,7 +116,15 @@
           <p class="ml-4 text-lg font-medium">Loading...</p>
         </div>
         <p v-else-if="error" class="text-red-500 py-20">{{ error }}</p>
-        <CardPage v-else :events="sortedEvents" compact />
+        <CardPage
+          v-else
+          :events="items"
+          compact
+          server-paginated
+          :current-page="currentPage"
+          :max-page="maxPage"
+          @page-change="setPage"
+        />
       </div>
 
       <img
@@ -139,28 +147,43 @@ import Footer from '../../components/Footer.vue'
 import Navbar from '../../components/Navbar.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import { useCountUp } from '../../composables/useCountUp'
-import { computed, ref } from 'vue'
-import { useEvents } from '../../composables/useEvents'
-import { useEventFilters } from '../../composables/useFilters'
+import { computed, onMounted, ref } from 'vue'
+import { fetchCategories, fetchEventsPage } from '../../services/api'
+import { useServerList } from '../../composables/useServerList'
 import { getCategoryIcon } from '../../utils/categoryIcons'
+import type { Category, Event } from '../../types'
 
-const { events, categories, isLoading, error } = useEvents(undefined, { autoLoad: true })
+const {
+  items,
+  isLoading,
+  error,
+  searchQuery,
+  sortOption,
+  isDropdownOpen,
+  categoryId: selectedCategoryId,
+  currentPage,
+  maxPage,
+  total,
+  toggleDropdown,
+  handleSortChange,
+  setCategory,
+  setPage,
+} = useServerList<Event>(query => fetchEventsPage(query), { perPage: 12 })
 
-const selectedCategoryId = ref<number | null>(null)
+const categories = ref<Category[]>([])
 
-const categoryFilteredEvents = computed(() =>
-  selectedCategoryId.value == null
-    ? events.value
-    : events.value.filter(event => event.category_id === selectedCategoryId.value),
-)
+onMounted(async () => {
+  try {
+    const list = await fetchCategories()
+    categories.value = Array.isArray(list) ? list : []
+  } catch {
+    categories.value = []
+  }
+})
 
-const { searchQuery, sortOption, isDropdownOpen, toggleDropdown, handleSortChange, sortedEvents } =
-  useEventFilters(categoryFilteredEvents, 'title', 'start_date')
-
-const trendingCount = computed(() => events.value.length)
 const categoryCount = computed(() => categories.value.length)
 
-const animatedTrendingCount = useCountUp(trendingCount, 2000)
+const animatedTrendingCount = useCountUp(total, 2000)
 const animatedCategoryCount = useCountUp(categoryCount, 2000)
 
 const scrollToAcara = () => {
@@ -169,7 +192,7 @@ const scrollToAcara = () => {
 }
 
 const selectCategory = (id: number | null) => {
-  selectedCategoryId.value = id
+  setCategory(id)
   scrollToAcara()
 }
 </script>

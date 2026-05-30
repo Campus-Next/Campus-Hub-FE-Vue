@@ -131,6 +131,51 @@ export const fetchCategories = () =>
 export interface EventListQuery {
   category?: string
   category_id?: number
+  search?: string
+  sort?: string
+  page?: number
+  per_page?: number
+}
+
+export interface ListQuery extends EventListQuery {
+  status?: string
+  scope?: string
+}
+
+export interface ListMeta {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  counts?: Record<string, number>
+}
+
+export interface Paginated<T> {
+  items: T[]
+  meta: ListMeta | null
+}
+
+const buildListParams = (query: ListQuery): string => {
+  const params = new URLSearchParams()
+  if (query.scope) params.set('scope', query.scope)
+  if (query.category) params.set('category', query.category)
+  if (query.category_id) params.set('category_id', String(query.category_id))
+  if (query.search) params.set('search', query.search)
+  if (query.sort) params.set('sort', query.sort)
+  if (query.status && query.status.toLowerCase() !== 'all') params.set('status', query.status.toLowerCase())
+  if (query.page) params.set('page', String(query.page))
+  if (query.per_page) params.set('per_page', String(query.per_page))
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
+// Listing requests opt into server-side pagination by sending page/per_page;
+// the backend then returns { data: [...], meta: {...} }. Returns both.
+async function requestList<T>(path: string, init: RequestInit): Promise<Paginated<T>> {
+  const body = await request<any>(path, init, { unwrap: false })
+  const items = Array.isArray(body?.data) ? (body.data as T[]) : []
+  const meta = body && typeof body === 'object' && body.meta ? (body.meta as ListMeta) : null
+  return { items, meta }
 }
 
 export const fetchEvents = (query: EventListQuery = {}) => {
@@ -140,6 +185,9 @@ export const fetchEvents = (query: EventListQuery = {}) => {
   const qs = params.toString()
   return request<Event[]>(`/events${qs ? `?${qs}` : ''}`, { method: 'GET' })
 }
+
+export const fetchEventsPage = (query: ListQuery = {}) =>
+  requestList<Event>(`/events${buildListParams(query)}`, { method: 'GET' })
 
 export const fetchEvent = (id: number | string) =>
   request<Event>(`/events/${id}`, { method: 'GET' })
@@ -170,6 +218,12 @@ export const deleteEvent = (eventId: number | string, token: string) =>
 export const fetchMyOrganizedEvents = (token: string) =>
   request<Event[]>('/my-events?scope=organized', { method: 'GET', headers: buildHeaders(token) })
 
+export const fetchMyOrganizedEventsPage = (token: string, query: ListQuery = {}) =>
+  requestList<Event>(`/my-events${buildListParams({ ...query, scope: 'organized' })}`, {
+    method: 'GET',
+    headers: buildHeaders(token),
+  })
+
 // ===== Event participation =====
 
 export const enrollEvent = (eventId: number | string, token: string) =>
@@ -190,6 +244,12 @@ export const cancelRegistration = (eventId: number | string, token: string) =>
 export const fetchMyRegisteredEvents = (token: string) =>
   request<EventParticipant[]>('/my-events?scope=registered', { method: 'GET', headers: buildHeaders(token) })
 
+export const fetchMyRegisteredEventsPage = (token: string, query: ListQuery = {}) =>
+  requestList<EventParticipant>(`/my-events${buildListParams({ ...query, scope: 'registered' })}`, {
+    method: 'GET',
+    headers: buildHeaders(token),
+  })
+
 export const fetchUniqueCode = (eventId: number | string, token: string) =>
   request<{ unique_code: string | null; status: ParticipantStatus }>(`/events/${eventId}/my-code`, {
     method: 'GET',
@@ -198,6 +258,16 @@ export const fetchUniqueCode = (eventId: number | string, token: string) =>
 
 export const fetchEventParticipants = (eventId: number | string, token: string) =>
   request<EventParticipant[]>(`/events/${eventId}/participants`, {
+    method: 'GET',
+    headers: buildHeaders(token),
+  })
+
+export const fetchEventParticipantsPage = (
+  eventId: number | string,
+  token: string,
+  query: ListQuery = {},
+) =>
+  requestList<EventParticipant>(`/events/${eventId}/participants${buildListParams(query)}`, {
     method: 'GET',
     headers: buildHeaders(token),
   })
