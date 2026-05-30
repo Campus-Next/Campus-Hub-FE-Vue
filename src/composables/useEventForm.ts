@@ -50,6 +50,7 @@ export function useEventForm(initialData?: any) {
   const registration_deadline = ref(initialData?.registration_deadline || '')
   const location = ref(initialData?.location || '')
   const isOffline = ref(initialData?.isOffline || false)
+  const category_id = ref(initialData?.category_id ? String(initialData.category_id) : '')
 
   // Image upload
   const imageFile = ref<File | null>(null)
@@ -148,6 +149,9 @@ export function useEventForm(initialData?: any) {
     formData.append('registration_deadline', toBackendDateTime(registration_deadline.value))
     formData.append('max_participants', String(max_participants.value))
     formData.append('location', isOffline.value ? location.value : 'Online')
+    if (category_id.value) {
+      formData.append('category_id', category_id.value)
+    }
 
     if (imageFile.value) {
       formData.append('image', imageFile.value)
@@ -184,60 +188,10 @@ export function useEventForm(initialData?: any) {
     registration_deadline.value = toDateTimeLocal(data.registration_deadline || '')
 
     max_participants.value = data.max_participants || data.slot || ''
-
-    location.value  = data.location || ''
-    isOffline.value = !!(data.location && data.location !== 'Online')
-
-    // Pre-fill image preview from existing images array or direct path
-    if (data.images && data.images.length > 0) {
-      const existingPath = data.images[0].path
-      imagePreviewUrl.value = resolveStorageUrl(existingPath)
-    } else {
-      imagePreviewUrl.value = null
-    }
-
-    eventLinks.value = Array.isArray(data.event_links)
-      ? data.event_links.map((link: any) => ({
-          id: link.id,
-          title: link.title || '',
-          url: link.url || '',
-        }))
-      : []
-    removedLinkIds.value = []
-  }
-
-  const revokeImagePreview = () => {
-    if (imagePreviewUrl.value && imagePreviewUrl.value.startsWith('blob:')) {
-      URL.revokeObjectURL(imagePreviewUrl.value)
-    }
-  }
-
-  // Handle file selection
-  const handleImageSelect = (file: File) => {
-    revokeImagePreview()
-    imageFile.value = file
-    imagePreviewUrl.value = URL.createObjectURL(file)
-  }
-
-  const clearImage = () => {
-    revokeImagePreview()
-    imageFile.value = null
-    imagePreviewUrl.value = null
-  }
-
-  const cleanupImagePreview = () => {
-    revokeImagePreview()
-  }
-
-  const addEventLink = () => {
-    eventLinks.value.push({ title: '', url: '' })
-  }
-
-  const removeEventLink = (index: number) => {
-    const [removed] = eventLinks.value.splice(index, 1)
-    if (removed?.id) {
-      removedLinkIds.value.push(removed.id)
-    }
+    registration_fee.value = data.registration_fee || '0'
+    location.value = data.location || ''
+    isOffline.value = data.location && data.location !== 'Online'
+    category_id.value = data.category_id ? String(data.category_id) : ''
   }
 
   return {
@@ -253,11 +207,7 @@ export function useEventForm(initialData?: any) {
     registration_deadline,
     location,
     isOffline,
-    imageFile,
-    imagePreviewUrl,
-    eventLinks,
-    removedLinkIds,
-    eventLinkErrors,
+    category_id,
     isFormValid,
     isSecondStepValid,
     isFormComplete,

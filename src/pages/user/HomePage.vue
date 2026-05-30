@@ -57,14 +57,14 @@
           <li class="hover:scale-110 hover:-translate-y-2 transition-transform duration-150">
             <button
               type="button"
-              class="flex flex-col items-center gap-2 text-[#003266] font-medium"
-              @click="selectCategory(null)"
+              :class="[
+                'flex flex-col items-center gap-2 font-medium',
+                selectedCategoryId === null ? 'text-[#027FFF]' : 'text-[#003266]'
+              ]"
+              @click="handleCategoryClick(null)"
             >
-              <div
-                class="w-20 h-20 rounded-full flex items-center justify-center"
-                :class="selectedCategoryId === null ? 'bg-[#027FFF]' : 'bg-[#EAF4FF]'"
-              >
-                <i :class="['ri-apps-2-line text-3xl', selectedCategoryId === null ? 'text-white' : 'text-[#027FFF]']" />
+              <div class="w-20 h-20 rounded-full bg-[#EAF4FF] flex items-center justify-center">
+                <i class="ri-apps-line text-3xl text-[#027FFF]" />
               </div>
               <span class="text-sm">Semua</span>
             </button>
@@ -76,8 +76,11 @@
           >
             <button
               type="button"
-              class="flex flex-col items-center gap-2 text-[#003266] font-medium"
-              @click="selectCategory(category.id)"
+              :class="[
+                'flex flex-col items-center gap-2 font-medium',
+                selectedCategoryId === category.id ? 'text-[#027FFF]' : 'text-[#003266]'
+              ]"
+              @click="handleCategoryClick(category.id)"
             >
               <div
                 class="w-20 h-20 rounded-full flex items-center justify-center"
@@ -147,9 +150,8 @@ import Footer from '../../components/Footer.vue'
 import Navbar from '../../components/Navbar.vue'
 import SearchSort from '../../components/SearchSort.vue'
 import { useCountUp } from '../../composables/useCountUp'
-import { computed, onMounted, ref } from 'vue'
-import { fetchCategories, fetchEventsPage } from '../../services/api'
-import { useServerList } from '../../composables/useServerList'
+import { computed, ref } from 'vue'
+import { useEvents } from '../../composables/useEvents'
 import { getCategoryIcon } from '../../utils/categoryIcons'
 import type { Category, Event } from '../../types'
 
@@ -170,16 +172,8 @@ const {
   setPage,
 } = useServerList<Event>(query => fetchEventsPage(query), { perPage: 12 })
 
-const categories = ref<Category[]>([])
-
-onMounted(async () => {
-  try {
-    const list = await fetchCategories()
-    categories.value = Array.isArray(list) ? list : []
-  } catch {
-    categories.value = []
-  }
-})
+const { events, categories, isLoading, error, loadEvents } = useEvents(undefined, { autoLoad: true })
+const selectedCategoryId = ref<number | null>(null)
 
 const categoryCount = computed(() => categories.value.length)
 
@@ -191,8 +185,9 @@ const scrollToAcara = () => {
   element?.scrollIntoView({ behavior: 'smooth' })
 }
 
-const selectCategory = (id: number | null) => {
-  setCategory(id)
+const handleCategoryClick = (categoryId: number | null) => {
+  selectedCategoryId.value = categoryId
+  loadEvents(categoryId ?? undefined)
   scrollToAcara()
 }
 </script>
