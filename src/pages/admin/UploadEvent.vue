@@ -39,6 +39,9 @@
                 max_participants,
                 isOffline,
                 imagePreviewUrl,
+                attachment_name: attachmentName,
+                attachment_path: attachmentPath,
+                attachment_url: attachmentUrl,
                 event_links: getCleanEventLinks(),
               }"
             >
@@ -309,6 +312,44 @@
                   >
                 </div>
 
+                <div class="space-y-2">
+                  <label :class="labelClasses">Dokumen Acara (Opsional)</label>
+                  <div
+                    class="relative border-2 border-dashed rounded-xl transition-all duration-200 overflow-hidden"
+                    :class="attachmentName
+                      ? 'border-blue-400 bg-blue-50'
+                      : 'border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'"
+                    @dragover.prevent
+                    @drop.prevent="onAttachmentDrop"
+                  >
+                    <div v-if="attachmentName" class="flex items-center gap-3 p-4">
+                      <i class="ri-file-text-line text-2xl text-blue-500 flex-shrink-0" />
+                      <span class="min-w-0 flex-1 truncate font-medium text-[#003266]">{{ attachmentName }}</span>
+                      <button
+                        type="button"
+                        class="border border-red-200 text-red-600 rounded-lg w-10 h-10 hover:bg-red-50 transition flex items-center justify-center"
+                        aria-label="Hapus dokumen acara"
+                        @click="clearAttachment"
+                      >
+                        <i class="ri-delete-bin-line text-lg" />
+                      </button>
+                    </div>
+
+                    <label v-else class="flex flex-col items-center justify-center py-8 cursor-pointer">
+                      <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                        <i class="ri-file-add-line text-2xl text-blue-500" />
+                      </div>
+                      <p class="text-gray-700 font-semibold mb-1">Klik untuk upload atau drag & drop</p>
+                      <p class="text-gray-400 text-sm">Dokumen pendukung acara</p>
+                      <input
+                        type="file"
+                        class="hidden"
+                        @change="onAttachmentChange"
+                      >
+                    </label>
+                  </div>
+                </div>
+
                 <div class="space-y-3">
                   <div class="flex items-center justify-between gap-4">
                     <label :class="labelClasses">Link Acara</label>
@@ -429,6 +470,9 @@ const {
   location,
   isOffline,
   imagePreviewUrl,
+  attachmentName,
+  attachmentPath,
+  attachmentUrl,
   eventLinks,
   eventLinkErrors,
   isFormValid,
@@ -442,6 +486,8 @@ const {
   setFormData,
   handleImageSelect,
   clearImage,
+  handleAttachmentSelect,
+  clearAttachment,
   cleanupImagePreview,
   addEventLink,
   removeEventLink,
@@ -476,6 +522,16 @@ const onFileChange = (e: Event) => {
 const onDrop = (e: DragEvent) => {
   const file = e.dataTransfer?.files?.[0]
   if (file && file.type.startsWith('image/')) handleImageSelect(file)
+}
+const onAttachmentChange = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) handleAttachmentSelect(file)
+  input.value = ''
+}
+const onAttachmentDrop = (e: DragEvent) => {
+  const file = e.dataTransfer?.files?.[0]
+  if (file) handleAttachmentSelect(file)
 }
 
 const handlePublish = async () => {

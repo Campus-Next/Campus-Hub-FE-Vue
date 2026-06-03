@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { resolveStorageUrl } from '../utils/helpers'
+import { resolveStorageFileUrl, resolveStorageUrl } from '../utils/helpers'
 
 interface EventLinkForm {
   id?: number
@@ -54,6 +54,10 @@ export function useEventForm(initialData?: any) {
   // Image upload
   const imageFile = ref<File | null>(null)
   const imagePreviewUrl = ref<string | null>(null)
+  const attachmentFile = ref<File | null>(null)
+  const attachmentName = ref(initialData?.attachment_name || '')
+  const attachmentPath = ref(initialData?.attachment_path || '')
+  const removeAttachment = ref(false)
   const eventLinks = ref<EventLinkForm[]>(
     Array.isArray(initialData?.event_links) ? initialData.event_links : [],
   )
@@ -62,6 +66,7 @@ export function useEventForm(initialData?: any) {
   const eventStartDateTime = computed(() =>
     start_date_date.value && start_date_time.value ? `${start_date_date.value}T${start_date_time.value}` : '',
   )
+  const attachmentUrl = computed(() => resolveStorageFileUrl(attachmentPath.value))
 
   // --- Validation ---
 
@@ -155,6 +160,12 @@ export function useEventForm(initialData?: any) {
       formData.append('image', imageFile.value)
     }
 
+    if (attachmentFile.value) {
+      formData.append('attachment', attachmentFile.value)
+    } else if (removeAttachment.value) {
+      formData.append('remove_attachment', '1')
+    }
+
     return formData
   }
 
@@ -183,6 +194,20 @@ export function useEventForm(initialData?: any) {
     cleanupImagePreview()
     imageFile.value = file
     imagePreviewUrl.value = URL.createObjectURL(file)
+  }
+
+  const handleAttachmentSelect = (file: File) => {
+    attachmentFile.value = file
+    attachmentName.value = file.name
+    attachmentPath.value = ''
+    removeAttachment.value = false
+  }
+
+  const clearAttachment = () => {
+    attachmentFile.value = null
+    removeAttachment.value = !!attachmentPath.value
+    attachmentPath.value = ''
+    attachmentName.value = ''
   }
 
   const addEventLink = () => {
@@ -216,7 +241,11 @@ export function useEventForm(initialData?: any) {
     max_participants.value = data.max_participants || data.slot || ''
     location.value = data.location || ''
     isOffline.value = data.location && data.location !== 'Online'
-    imagePreviewUrl.value = resolveStorageUrl(data.image_url || data.image?.path || '')
+    imagePreviewUrl.value = resolveStorageUrl(data.image_url || data.image?.path || data.images?.[0]?.path || '')
+    attachmentFile.value = null
+    attachmentPath.value = data.attachment_path || ''
+    attachmentName.value = data.attachment_name || (attachmentPath.value ? attachmentPath.value.split('/').pop() : '')
+    removeAttachment.value = false
     eventLinks.value = Array.isArray(data.event_links) ? data.event_links : []
   }
 
@@ -225,6 +254,9 @@ export function useEventForm(initialData?: any) {
     description,
     category_id,
     imagePreviewUrl,
+    attachmentName,
+    attachmentPath,
+    attachmentUrl,
     start_date_date,
     start_date_time,
     end_date_date,
@@ -248,6 +280,8 @@ export function useEventForm(initialData?: any) {
     setFormData,
     handleImageSelect,
     clearImage,
+    handleAttachmentSelect,
+    clearAttachment,
     cleanupImagePreview,
     addEventLink,
     removeEventLink,

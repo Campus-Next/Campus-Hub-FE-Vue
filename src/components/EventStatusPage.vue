@@ -44,6 +44,11 @@
             {{ eventData.description }}
           </p>
 
+          <EventAttachmentLink
+            :name="eventData.attachment_name"
+            :path="eventData.attachment_path"
+          />
+
           <div v-if="eventData.event_links && eventData.event_links.length > 0" class="event-links mt-6">
             <h3 class="font-semibold text-[18px] mb-3 text-[#003266]">Tautan Acara</h3>
             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-[486px] items-stretch">
@@ -152,6 +157,7 @@ import Navbar from './Navbar.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import ErrorMessage from './ErrorMessage.vue'
 import EventDetailItem from './EventDetailItem.vue'
+import EventAttachmentLink from './EventAttachmentLink.vue'
 import PopUpCancel from './PopUpCancel.vue'
 import { getEventImageUrl } from '../utils/helpers'
 import type { EventParticipant, ParticipantStatus } from '../types'

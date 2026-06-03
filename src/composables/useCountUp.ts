@@ -1,6 +1,6 @@
 import { ref, watch, unref, type Ref } from 'vue'
 
-export function useCountUp(
+export function   useCountUp(
   targetValue: Ref<number> | number,
   durationMs: number = 2000
 ) {

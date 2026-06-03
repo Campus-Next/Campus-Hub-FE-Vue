@@ -96,6 +96,11 @@
             </p>
           </div>
 
+          <EventAttachmentLink
+            :name="eventData.attachment_name"
+            :path="eventData.attachment_path"
+          />
+
           <div v-if="eventData.event_links && eventData.event_links.length > 0" class="mt-6 w-full">
             <h2 class="font-semibold text-[18px] text-[#003266] mb-3">Link Acara</h2>
             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full items-stretch">
@@ -199,6 +204,7 @@ import { fetchEvent, enrollEvent, fetchUniqueCode } from '../../services/api'
 import { useAuth } from '../../composables/useAuth'
 import { useCart } from '../../composables/useCart'
 import Navbar from '../../components/Navbar.vue'
+import EventAttachmentLink from '../../components/EventAttachmentLink.vue'
 import { getEventImageUrl } from '../../utils/helpers'
 import { isAuthenticated } from '../../utils/authSession'
 import type { Event, ParticipantStatus } from '../../types'

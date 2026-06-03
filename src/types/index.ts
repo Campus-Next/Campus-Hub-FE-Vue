@@ -55,6 +55,8 @@ export interface Event {
   max_participants: number
   registration_open: string
   registration_deadline: string
+  attachment_path?: string | null
+  attachment_name?: string | null
   created_at?: string
   updated_at?: string
   status?: string

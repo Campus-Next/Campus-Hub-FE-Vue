@@ -93,6 +93,12 @@
           </p>
         </div>
 
+        <EventAttachmentLink
+          :name="eventData.attachment_name"
+          :path="eventData.attachment_path"
+          :url="eventData.attachment_url"
+        />
+
         <div v-if="eventLinks.length > 0" class="event-links mt-6">
           <h3 class="font-semibold text-[18px] mb-3 text-[#003266]">Tautan Acara</h3>
           <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-stretch">
@@ -126,6 +132,7 @@ import DateIcon from '../assets/image/date.svg'
 import ClockIcon from '../assets/image/clock.svg'
 import LocationIcon from '../assets/image/location.svg'
 import ChairIcon from '../assets/image/chair.svg'
+import EventAttachmentLink from './EventAttachmentLink.vue'
 
 const props = defineProps<{
   eventData: {
@@ -139,6 +146,9 @@ const props = defineProps<{
     max_participants?: string | number
     isOffline?: boolean
     imagePreviewUrl?: string | null
+    attachment_name?: string
+    attachment_path?: string
+    attachment_url?: string
     event_links?: Array<{ id?: number; title: string; url: string }>
   }
 }>()
