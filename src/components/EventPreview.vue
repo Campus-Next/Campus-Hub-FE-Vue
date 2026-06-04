@@ -4,7 +4,7 @@
       <!-- Event Poster -->
       <div class="w-full md:w-1/3 flex-shrink-0">
         <div
-          v-if="eventData.imagePreviewUrl"
+          v-if="eventData.imagePreviewUrl && eventData.image_preview_is_image"
           class="w-full aspect-[3/4] rounded-2xl overflow-hidden shadow-lg"
         >
           <img
@@ -12,6 +12,13 @@
             alt="Poster Event"
             class="w-full h-full object-cover"
           >
+        </div>
+        <div
+          v-else-if="eventData.image_file_name"
+          class="w-full aspect-[3/4] rounded-2xl bg-blue-50 border border-blue-200 flex flex-col items-center justify-center shadow-lg px-6 text-center"
+        >
+          <i class="ri-file-code-line text-6xl text-blue-400 mb-3" />
+          <p class="text-[#003266] text-sm font-semibold break-all">{{ eventData.image_file_name }}</p>
         </div>
         <div
           v-else
@@ -146,6 +153,8 @@ const props = defineProps<{
     max_participants?: string | number
     isOffline?: boolean
     imagePreviewUrl?: string | null
+    image_file_name?: string
+    image_preview_is_image?: boolean
     attachment_name?: string
     attachment_path?: string
     attachment_url?: string

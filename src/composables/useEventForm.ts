@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { resolveStorageFileUrl, resolveStorageUrl } from '../utils/helpers'
+import { resolveStorageFileUrl } from '../utils/helpers'
 
 interface EventLinkForm {
   id?: number
@@ -32,6 +32,16 @@ const splitDateTime = (value: string) => {
   return { date: date || '', time: time || '' }
 }
 
+const imageExtensionPattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp)$/i
+
+const isPreviewableImage = (value: File | string | null | undefined) => {
+  if (!value) return false
+  if (value instanceof File) {
+    return value.type.startsWith('image/') || imageExtensionPattern.test(value.name)
+  }
+  return value.startsWith('blob:') || imageExtensionPattern.test(value)
+}
+
 export function useEventForm(initialData?: any) {
   const title = ref(initialData?.title || '')
   const description = ref(initialData?.description || '')
@@ -54,6 +64,8 @@ export function useEventForm(initialData?: any) {
   // Image upload
   const imageFile = ref<File | null>(null)
   const imagePreviewUrl = ref<string | null>(null)
+  const imageFileName = ref('')
+  const imagePreviewIsImage = ref(false)
   const attachmentFile = ref<File | null>(null)
   const attachmentName = ref(initialData?.attachment_name || '')
   const attachmentPath = ref(initialData?.attachment_path || '')
@@ -188,12 +200,16 @@ export function useEventForm(initialData?: any) {
     cleanupImagePreview()
     imageFile.value = null
     imagePreviewUrl.value = null
+    imageFileName.value = ''
+    imagePreviewIsImage.value = false
   }
 
   const handleImageSelect = (file: File) => {
     cleanupImagePreview()
     imageFile.value = file
-    imagePreviewUrl.value = URL.createObjectURL(file)
+    imageFileName.value = file.name
+    imagePreviewIsImage.value = isPreviewableImage(file)
+    imagePreviewUrl.value = imagePreviewIsImage.value ? URL.createObjectURL(file) : null
   }
 
   const handleAttachmentSelect = (file: File) => {
@@ -241,7 +257,10 @@ export function useEventForm(initialData?: any) {
     max_participants.value = data.max_participants || data.slot || ''
     location.value = data.location || ''
     isOffline.value = data.location && data.location !== 'Online'
-    imagePreviewUrl.value = resolveStorageUrl(data.image_url || data.image?.path || data.images?.[0]?.path || '')
+    const imagePath = data.image_url || data.image?.path || data.images?.[0]?.path || ''
+    imagePreviewUrl.value = imagePath ? resolveStorageFileUrl(imagePath) : null
+    imageFileName.value = imagePath ? String(imagePath).split('/').pop() || '' : ''
+    imagePreviewIsImage.value = isPreviewableImage(imagePath)
     attachmentFile.value = null
     attachmentPath.value = data.attachment_path || ''
     attachmentName.value = data.attachment_name || (attachmentPath.value ? attachmentPath.value.split('/').pop() : '')
@@ -254,6 +273,8 @@ export function useEventForm(initialData?: any) {
     description,
     category_id,
     imagePreviewUrl,
+    imageFileName,
+    imagePreviewIsImage,
     attachmentName,
     attachmentPath,
     attachmentUrl,

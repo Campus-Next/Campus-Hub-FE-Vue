@@ -39,6 +39,8 @@
                 max_participants,
                 isOffline,
                 imagePreviewUrl,
+                image_file_name: imageFileName,
+                image_preview_is_image: imagePreviewIsImage,
                 attachment_name: attachmentName,
                 attachment_path: attachmentPath,
                 attachment_url: attachmentUrl,
@@ -69,19 +71,24 @@
                   <label :class="labelClasses">Poster / Gambar Acara</label>
                   <div
                     class="relative border-2 border-dashed rounded-xl transition-all duration-200 overflow-hidden"
-                    :class="imagePreviewUrl
+                    :class="imagePreviewUrl || imageFileName
                       ? 'border-blue-400 bg-blue-50'
                       : 'border-gray-300 hover:border-blue-400 bg-gray-50 hover:bg-blue-50'"
                     @dragover.prevent
                     @drop.prevent="onDrop"
                   >
                     <!-- Preview -->
-                    <div v-if="imagePreviewUrl" class="relative group">
+                    <div v-if="imagePreviewUrl || imageFileName" class="relative group">
                       <img
+                        v-if="imagePreviewUrl && imagePreviewIsImage"
                         :src="imagePreviewUrl"
                         alt="Preview Poster"
                         class="w-full max-h-64 object-cover rounded-xl"
                       >
+                      <div v-else class="min-h-48 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                        <i class="ri-file-code-line text-5xl text-blue-500" />
+                        <p class="font-semibold text-[#003266] break-all">{{ imageFileName }}</p>
+                      </div>
                       <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                         <button
                           type="button"
@@ -99,10 +106,9 @@
                         <i class="ri-image-add-line text-3xl text-blue-500" />
                       </div>
                       <p class="text-gray-700 font-semibold mb-1">Klik untuk upload atau drag & drop</p>
-                      <p class="text-gray-400 text-sm">JPEG, PNG, WebP — Maks. 5 MB</p>
+                      <p class="text-gray-400 text-sm">File poster acara</p>
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/webp"
                         class="hidden"
                         @change="onFileChange"
                       >
@@ -442,6 +448,7 @@ import EventPreview from '../../components/EventPreview.vue'
 import { createEvent, createEventLink, fetchCategories } from '../../services/api'
 import { useEventForm } from '../../composables/useEventForm'
 import { useAuthCheck } from '../../composables/useAuthCheck'
+import { formatEventUploadError } from '../../utils/uploadErrorMessages'
 import type { Category } from '../../types'
 
 const router = useRouter()
@@ -470,6 +477,8 @@ const {
   location,
   isOffline,
   imagePreviewUrl,
+  imageFileName,
+  imagePreviewIsImage,
   attachmentName,
   attachmentPath,
   attachmentUrl,
@@ -521,7 +530,7 @@ const onFileChange = (e: Event) => {
 }
 const onDrop = (e: DragEvent) => {
   const file = e.dataTransfer?.files?.[0]
-  if (file && file.type.startsWith('image/')) handleImageSelect(file)
+  if (file) handleImageSelect(file)
 }
 const onAttachmentChange = (e: Event) => {
   const input = e.target as HTMLInputElement
@@ -551,7 +560,7 @@ const handlePublish = async () => {
       setTimeout(() => router.push(`/my-events/${event.id}/edit`), 1600)
     }
   } catch (error: any) {
-    popupMessage.value  = error.data || 'Koneksi Timeout, Silahkan Coba Lagi'
+    popupMessage.value  = formatEventUploadError(error)
     isPopupVisible.value = true
   } finally {
     isLoading.value = false

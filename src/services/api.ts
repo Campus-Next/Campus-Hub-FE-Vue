@@ -14,6 +14,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 interface ApiError extends Error {
   data?: any
   status?: number
+  body?: any
 }
 
 const buildHeaders = (token?: string, json = false): HeadersInit => {
@@ -47,6 +48,7 @@ async function request<T>(
     const err: ApiError = new Error(errMsg)
     err.data = errMsg
     err.status = response.status
+    err.body = body
     throw err
   }
 
